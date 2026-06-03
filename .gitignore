@@ -1,0 +1,7 @@
+# Ingore node modules
+node_modules
+
+# dotenv
+.env
+
+uploads/

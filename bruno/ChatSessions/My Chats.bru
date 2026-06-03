@@ -1,0 +1,20 @@
+meta {
+  name: Get My Chat Sessions
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/chat-sessions/my-chats
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get My Chat Sessions
+
+  Returns chat sessions for the current authenticated user.
+}

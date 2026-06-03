@@ -1,0 +1,20 @@
+meta {
+  name: End Chat Session
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/chat-sessions/{{chatSessionId}}/end
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # End Chat Session
+
+  Ends an active chat session.
+}

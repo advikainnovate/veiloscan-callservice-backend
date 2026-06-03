@@ -1,0 +1,20 @@
+meta {
+  name: Get Active Calls
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/calls/active
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Active Calls
+
+  Returns current active call sessions for the authenticated actor.
+}

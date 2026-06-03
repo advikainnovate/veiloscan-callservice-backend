@@ -1,0 +1,16 @@
+meta {
+  name: Get Daily Call Count
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/v1/calls/daily-count/{{userId}}
+  auth: none
+}
+
+docs {
+  # Daily Call Count
+
+  Returns the number of calls received today for a user.
+}

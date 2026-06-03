@@ -1,0 +1,115 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "AdvikaInnovate Template Service API",
+        "version": "1.0.0",
+        "description": "API documentation for the Base Microservice Template including User CRUD and Health Check."
+    },
+    "servers": [
+        {
+            "url": "http://localhost:5002/api/v1",
+            "description": "Local Development Server"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        },
+        "schemas": {
+            "User": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "format": "uuid" },
+                    "email": { "type": "string", "example": "user@example.com" },
+                    "displayName": { "type": "string", "example": "john_doe" },
+                    "role": { "type": "string", "example": "ADMIN" },
+                    "status": { "type": "string", "example": "active" }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/healthz": {
+            "get": {
+                "summary": "Get service health status",
+                "tags": ["System"],
+                "responses": {
+                    "200": {
+                        "description": "Service is running healthy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": { "type": "string", "example": "OK" },
+                                        "message": { "type": "string", "example": "Service is healthy" },
+                                        "timestamp": { "type": "string", "format": "date-time" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/register": {
+            "post": {
+                "summary": "Register a new user",
+                "tags": ["Users"],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["email", "password", "displayName"],
+                                "properties": {
+                                    "email": { "type": "string", "example": "user@example.com" },
+                                    "password": { "type": "string", "example": "password123" },
+                                    "displayName": { "type": "string", "example": "john_doe" }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": { "description": "User registered successfully" },
+                    "400": { "description": "Invalid input details" }
+                }
+            }
+        },
+        "/users/profile": {
+            "get": {
+                "summary": "Get authenticated user profile",
+                "tags": ["Users"],
+                "security": [{ "BearerAuth": [] }],
+                "responses": {
+                    "200": {
+                        "description": "User profile details",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/User" }
+                            }
+                        }
+                    },
+                    "401": { "description": "Unauthorized access" }
+                }
+            }
+        },
+        "/users/all": {
+            "get": {
+                "summary": "Get all users list (Admin only)",
+                "tags": ["Users"],
+                "security": [{ "BearerAuth": [] }],
+                "responses": {
+                    "200": { "description": "List of users" },
+                    "401": { "description": "Unauthorized" }
+                }
+            }
+        }
+    }
+}

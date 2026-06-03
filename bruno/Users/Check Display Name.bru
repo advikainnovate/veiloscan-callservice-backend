@@ -1,0 +1,66 @@
+meta {
+  name: Check Display Name
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users/check/displayName
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "display_name": "johndoe"
+  }
+}
+
+docs {
+  # Check Display Name
+  
+  Check if a display name is available.
+  
+  ## Authentication
+  
+  Requires Bearer token with admin role.
+  
+  ## Request Body
+  
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `display_name` | string | **Required** | Display name to check |
+  
+  ## Example Response (Available)
+  ```json
+  {
+    "success": true,
+    "code": 201,
+    "message": "Success",
+    "data": {
+      "isCreated": true
+    }
+  }
+  ```
+  
+  ## Example Response (Taken)
+  ```json
+  {
+    "success": true,
+    "code": 201,
+    "message": "Success",
+    "data": {
+      "isCreated": false
+    }
+  }
+  ```
+  
+  ## Notes
+  - Display names are case-insensitive
+  - Returns `isCreated: true` if available
+  - Returns `isCreated: false` if already taken
+}

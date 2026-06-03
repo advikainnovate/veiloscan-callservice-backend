@@ -1,0 +1,48 @@
+meta {
+  name: Delete
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/users/{{userId}}/delete
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Delete User
+  
+  Soft delete a user (sets deletedAt timestamp).
+  
+  ## Authentication
+  
+  Requires Bearer token with admin role.
+  
+  ## Path Parameters
+  
+  | Parameter | Type | Required | Description |
+  |-----------|------|----------|-------------|
+  | `userId` | string | **Required** | User UUID |
+  
+  ## Example Response
+  ```json
+  {
+    "success": true,
+    "code": 201,
+    "message": "Success",
+    "data": {
+      "id": "uuid"
+    }
+  }
+  ```
+  
+  ## Notes
+  - This is a soft delete (paranoid mode)
+  - User data is not permanently removed
+  - Deleted users won't appear in normal queries
+}

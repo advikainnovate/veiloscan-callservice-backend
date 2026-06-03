@@ -1,0 +1,54 @@
+meta {
+  name: Get Dashboard
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/v1/users/dashboard
+  body: none
+  auth: bearer
+}
+
+params:query {
+  ~userType: client
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Dashboard
+  
+  Get user statistics for dashboard.
+  
+  ## Authentication
+  
+  Requires Bearer token with admin role.
+  
+  ## Query Parameters
+  
+  | Parameter | Type | Required | Description |
+  |-----------|------|----------|-------------|
+  | `userType` | string | Optional | Filter by user type |
+  
+  ## Example Response
+  ```json
+  {
+    "success": true,
+    "code": 201,
+    "message": "Success",
+    "data": {
+      "activeUsers": 45,
+      "inActiveUsers": 5,
+      "blockedUsers": 2,
+      "pendingUsers": 8
+    }
+  }
+  ```
+  
+  ## Notes
+  - Returns counts for different user statuses
+  - Can be filtered by userType
+}

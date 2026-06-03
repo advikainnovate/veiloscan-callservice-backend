@@ -1,0 +1,21 @@
+meta {
+  name: Get Unassigned QR Codes
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/qr-codes/unassigned
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Unassigned QR Codes
+  
+  Lists available QR codes not yet assigned to a user.
+}

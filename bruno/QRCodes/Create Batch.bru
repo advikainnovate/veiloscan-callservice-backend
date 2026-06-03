@@ -1,0 +1,25 @@
+meta {
+  name: Create QR Code Batch
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/qr-codes/batch/create
+  body: json
+  data: {
+    "count": {{count}},
+    "prefix": "{{prefix}}"
+  }
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Create QR Code Batch
+
+  Creates multiple QR codes in one request. Requires admin auth.
+}

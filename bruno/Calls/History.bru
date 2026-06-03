@@ -1,0 +1,20 @@
+meta {
+  name: Get Call History
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/calls/history
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Call History
+
+  Returns the authenticated user's recent call history.
+}

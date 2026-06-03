@@ -1,0 +1,56 @@
+meta {
+  name: Update Status
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/users/{{userId}}/updateStatus
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "status": "active"
+  }
+}
+
+docs {
+  # Update User Status
+  
+  Update user status (active, inactive, pending, hold, blocked).
+  
+  ## Authentication
+  
+  Requires Bearer token with admin role.
+  
+  ## Path Parameters
+  
+  | Parameter | Type | Required | Description |
+  |-----------|------|----------|-------------|
+  | `userId` | string | **Required** | User UUID |
+  
+  ## Request Body
+  
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `status` | string | **Required** | Status: active, inactive, pending, hold, blocked |
+  
+  ## Example Response
+  ```json
+  {
+    "success": true,
+    "code": 201,
+    "message": "Success",
+    "data": {
+      "id": "uuid",
+      "status": "active"
+    }
+  }
+  ```
+}

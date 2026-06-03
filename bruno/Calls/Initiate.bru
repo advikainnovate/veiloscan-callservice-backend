@@ -1,0 +1,33 @@
+meta {
+  name: Initiate Call
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/calls/initiate
+  body: json
+  data: {
+    "qrToken": "{{qrToken}}",
+    "callerId": "{{callerId}}",
+    "guestId": "{{guestId}}",
+    "guestIp": "{{guestIp}}"
+  }
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Initiate Call
+
+  Creates a new call session using a QR token.
+
+  ## Body
+
+  - `qrToken` (required)
+  - `callerId` or `guestId`
+  - `guestIp` when using anonymous guest
+}

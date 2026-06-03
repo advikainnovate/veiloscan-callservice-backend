@@ -1,0 +1,25 @@
+meta {
+  name: Claim QR Code
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/qr-codes/claim
+  body: json
+  data: {
+    "token": "{{token}}",
+    "userId": "{{userId}}"
+  }
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Claim QR Code
+
+  Claims an unassigned QR code for a user. Requires admin auth.
+}

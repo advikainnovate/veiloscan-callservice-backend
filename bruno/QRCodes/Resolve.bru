@@ -1,0 +1,16 @@
+meta {
+  name: Resolve QR Code
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/v1/qr-codes/resolve/{{token}}
+  auth: none
+}
+
+docs {
+  # Resolve QR Code
+
+  Resolves a QR token to its target action or resource.
+}

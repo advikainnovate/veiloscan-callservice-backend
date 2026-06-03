@@ -1,0 +1,22 @@
+meta {
+  name: Accept Call
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/calls/{{callId}}/accept
+  body: json
+  data: {}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Accept Call
+
+  Accepts an incoming call.
+}

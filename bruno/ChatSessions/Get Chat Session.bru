@@ -1,0 +1,20 @@
+meta {
+  name: Get Chat Session
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/chat-sessions/{{chatSessionId}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Chat Session
+
+  Retrieves a single chat session by ID.
+}

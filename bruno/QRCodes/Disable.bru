@@ -1,0 +1,20 @@
+meta {
+  name: Disable QR Code
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/qr-codes/{{qrCodeId}}/disable
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Disable QR Code
+
+  Disables an existing QR code. Requires admin auth.
+}

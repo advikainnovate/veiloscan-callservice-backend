@@ -1,0 +1,22 @@
+meta {
+  name: Reject Call
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/calls/{{callId}}/reject
+  body: json
+  data: {}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Reject Call
+
+  Rejects an incoming call request.
+}

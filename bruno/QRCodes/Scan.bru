@@ -1,0 +1,20 @@
+meta {
+  name: Scan QR Code
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/qr-codes/scan
+  body: json
+  data: {
+    "token": "{{token}}"
+  }
+  auth: none
+}
+
+docs {
+  # Scan QR Code
+
+  Validates a QR code token and returns the matching code data.
+}

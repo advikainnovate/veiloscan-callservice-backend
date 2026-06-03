@@ -1,0 +1,83 @@
+meta {
+  name: Get All
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/users/create
+  body: json
+  auth: bearer
+}
+
+params:query {
+  ~userType: client
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+      "username": "guard.user",
+      "email": "guard.user@example.com",
+      "password": "Secret123",
+      "countryCode": "+1",
+      "phone": "1234567890",
+      "gender": "male",
+      "role": "guard",
+      "emergencyContact": "+11234567890"
+    }
+}
+
+docs {
+  # Get All Users
+  
+  Get paginated list of all users.
+  
+  ## Authentication
+  
+  Requires Bearer token with admin role.
+  
+  ## Query Parameters
+  
+  | Parameter | Type | Required | Description |
+  |-----------|------|----------|-------------|
+  | `page` | number | Optional | Page number (default: 1) |
+  | `limit` | number | Optional | Items per page (default: 20) |
+  | `userType` | string | Optional | Filter by user type |
+  
+  ## Example Response
+  ```json
+  {
+    "success": true,
+    "code": 201,
+    "message": "Success",
+    "data": {
+      "totalItems": 50,
+      "items": [
+        {
+          "id": "uuid",
+          "idd": "NXCS01000000001",
+          "userType": "client",
+          "username": "john.doe@example.com",
+          "firstName": "John",
+          "lastName": "Doe",
+          "display_name": "johndoe",
+          "email": "john.doe@example.com",
+          "countryCode": "+1",
+          "phoneNumber": "1234567890",
+          "gender": "male",
+          "status": "active",
+          "createdAt": "2026-01-28T12:00:00.000Z",
+          "updatedAt": "2026-01-28T12:00:00.000Z",
+          "deletedAt": null
+        }
+      ],
+      "totalPages": 3,
+      "currentPage": 1
+    }
+  }
+  ```
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Initiate Call From Chat
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/calls/initiate/from-chat
+  body: json
+  data: {
+    "callerId": "{{callerId}}",
+    "chatSessionId": "{{chatSessionId}}"
+  }
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Initiate Call From Chat
+
+  Starts a call using an existing chat session.
+}

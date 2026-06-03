@@ -1,0 +1,20 @@
+meta {
+  name: Reactivate QR Code
+  type: http
+  seq: 12
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/qr-codes/{{qrCodeId}}/reactivate
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Reactivate QR Code
+
+  Reactivates a previously disabled QR code. Requires admin auth.
+}

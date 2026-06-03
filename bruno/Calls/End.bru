@@ -1,0 +1,22 @@
+meta {
+  name: End Call
+  type: http
+  seq: 12
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/calls/{{callId}}/end
+  body: json
+  data: {}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # End Call
+
+  Ends an active call session.
+}

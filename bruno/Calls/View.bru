@@ -1,0 +1,20 @@
+meta {
+  name: View Call Session
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/calls/{{callId}}/view
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # View Call Session
+
+  Retrieves details for a specific call session.
+}

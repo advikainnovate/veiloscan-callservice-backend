@@ -1,0 +1,22 @@
+meta {
+  name: Ring Call
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/calls/{{callId}}/ring
+  body: json
+  data: {}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Ring Call
+
+  Sends a ringing event for a pending call.
+}

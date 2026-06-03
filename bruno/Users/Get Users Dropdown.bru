@@ -1,0 +1,62 @@
+meta {
+  name: Get Users Dropdown
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/api/v1/users/all/dropdown
+  body: none
+  auth: bearer
+}
+
+params:query {
+  ~search: john
+  ~userType: client
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Users Dropdown
+  
+  Get users list for dropdown/select components.
+  
+  ## Authentication
+  
+  Requires Bearer token with admin role.
+  
+  ## Query Parameters
+  
+  | Parameter | Type | Required | Description |
+  |-----------|------|----------|-------------|
+  | `search` | string | Optional | Search term |
+  | `userType` | string | Optional | Filter by user type |
+  
+  ## Example Response
+  ```json
+  {
+    "success": true,
+    "code": 201,
+    "message": "Success",
+    "data": [
+      {
+        "id": "uuid",
+        "idd": "NXCS01000000001",
+        "display_name": "johndoe",
+        "lastName": "Doe",
+        "email": "john.doe@example.com",
+        "firstName": "John",
+        "status": "active"
+      }
+    ]
+  }
+  ```
+  
+  ## Notes
+  - Returns simplified user data for dropdowns
+  - Only includes users with idd (generated ID)
+  - Can be filtered and searched
+}

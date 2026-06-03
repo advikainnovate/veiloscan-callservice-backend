@@ -1,0 +1,16 @@
+meta {
+  name: Get Call Duration
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/calls/{{callId}}/duration
+  auth: none
+}
+
+docs {
+  # Get Call Duration
+
+  Returns the duration of the specified call session.
+}

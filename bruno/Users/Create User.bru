@@ -1,0 +1,58 @@
+meta {
+  name: Create User
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users/create
+  body: {
+    "username": "guard.user",
+    "email": "guard.user@example.com",
+    "password": "Secret123",
+    "countryCode": "+1",
+    "phone": "1234567890",
+    "gender": "male",
+    "role": "guard",
+    "emergencyContact": "+11234567890"
+  }
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Create User
+
+  Admin-only endpoint for creating a user account with a specific role.
+
+  ## Body
+  - `role` (required): `super_admin`, `admin`, `guard`, or `user`
+  - `username` (required)
+  - `email` (required)
+  - `password` (required)
+
+  ## Example Response
+  ```json
+  {
+    "success": true,
+    "code": 201,
+    "message": "Successfully created",
+    "data": {
+      "id": "uuid",
+      "idd": "NXSU01000000001",
+      "role": "guard",
+      "username": "guard.user",
+      "display_name": "guard.user",
+      "email": "guard.user@example.com",
+      "countryCode": "+1",
+      "phone": "1234567890",
+      "emergencyContact": "+11234567890",
+      "gender": "male",
+      "status": "active"
+    }
+  }
+  ```
+}
