@@ -1,5 +1,5 @@
 const { Op, fn, col, literal } = require('sequelize');
-const db = require('../../database/models');
+const db = require('../database/models');
 
 exports.createQRCode = async (payload) => db.QrCodeModel.create(payload);
 

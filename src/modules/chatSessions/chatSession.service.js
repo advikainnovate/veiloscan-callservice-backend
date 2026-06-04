@@ -4,7 +4,7 @@ const { BadRequestException, ForbiddenException, NotFoundException, serviceRespo
 const { logger } = require('../../utils');
 const db = require('../../database/models');
 const qrCodeService = require('../qrCodes/qrCode.service');
-const chatSessionRepository = require('./chatSession.repository');
+const chatSessionRepository = require('../../repository/chatSession.repository');
 
 const chatSessionTtlMs = 24 * 60 * 60 * 1000;
 const activeChatLimit = 50;

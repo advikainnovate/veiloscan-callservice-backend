@@ -1,7 +1,7 @@
 const { HTTP_CODES, MESSAGES, CONSTANTS } = require('../../config');
 const { serviceResponse, NotFoundException, BadRequestException } = require('../../helpers');
 const { bcrypt, jwt } = require('../../utils');
-const userRepository = require('./user.repository');
+const userRepository = require('../../repository/user.repository');
 
 exports.register = async (payload) => {
     try {

@@ -6,7 +6,7 @@
 
 require('dotenv').config();
 const db = require('../database/models');
-const userRepository = require('../modules/users/user.repository');
+const userRepository = require('../repository/user.repository');
 const { bcrypt } = require('../utils');
 
 const args = require('minimist')(process.argv.slice(2));

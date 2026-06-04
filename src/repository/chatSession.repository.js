@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const db = require('../../database/models');
+const db = require('../database/models');
 
 const participantIncludes = [
     { model: db.UserModel, as: 'participant1', attributes: ['id', 'username', 'display_name', 'email'] },

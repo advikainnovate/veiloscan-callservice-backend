@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const db = require('../../database/models');
+const db = require('../database/models');
 
 const activeStatuses = ['initiated', 'ringing', 'connected'];
 

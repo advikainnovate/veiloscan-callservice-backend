@@ -1,10 +1,10 @@
 const { Op } = require('sequelize');
-const db = require('../../database/models');
-const { PGSN, bcrypt } = require('../../utils');
-const { BadRequestException } = require('../../helpers');
-const { MESSAGES, CONSTANTS } = require('../../config');
+const db = require('../database/models');
+const { PGSN, bcrypt } = require('../utils');
+const { BadRequestException } = require('../helpers');
+const { MESSAGES, CONSTANTS } = require('../config');
 const { v4: uuidv4 } = require('uuid');
-const { genMsterId } = require('../../utils/master');
+const { genMsterId } = require('../utils/master');
 
 exports.register = async (payload) => {
     payload.id = uuidv4();

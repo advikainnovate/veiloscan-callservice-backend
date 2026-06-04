@@ -3,7 +3,7 @@ const { CONFIG, HTTP_CODES, MESSAGES } = require('../../config');
 const { BadRequestException, NotFoundException, serviceResponse } = require('../../helpers');
 const { logger } = require('../../utils');
 const db = require('../../database/models');
-const qrCodeRepository = require('./qrCode.repository');
+const qrCodeRepository = require('../../repository/qrCode.repository');
 const qrTokenService = require('./qrToken.service');
 
 const allowedBatchCounts = [10, 25, 50, 100, 200, 500, 1000];
