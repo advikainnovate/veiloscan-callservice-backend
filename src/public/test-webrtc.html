@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Call WebRTC Test</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='14' font-size='16'%3E📞%3C/text%3E%3C/svg%3E">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f7f9fc; color: #111; }
+    h1 { margin-bottom: 0.2em; }
+    .panel { background: #fff; border: 1px solid #d7dde8; border-radius: 10px; padding: 18px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    label, button { display: block; margin: 8px 0; }
+    input, textarea { width: 100%; font-family: inherit; font-size: 14px; }
+    textarea { min-height: 180px; margin-top: 14px; padding: 12px; border-radius: 8px; border: 1px solid #d7dde8; background: #fbfcfd; }
+    button { padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; background: #0066ff; color: white; transition: background 0.2s ease; }
+    button:hover { background: #0053d4; }
+    .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .note { font-size: 0.95rem; color: #444; margin-top: 12px; }
+    .badge { display: inline-block; margin-right: 6px; padding: 4px 10px; border-radius: 999px; background: #e2e8f0; color: #102a43; font-size: 0.85rem; }
+    audio { margin-top: 10px; width: 100%; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h1>WebRTC Call Test</h1>
+    <p class="note">
+      Open this page in two browser windows/tabs and use the same session ID to connect peers.
+      The page uses Socket.IO signaling through the backend and sends audio only.
+    </p>
+    <label>
+      Session ID:
+      <input id="sessionId" placeholder="Enter or generate a session ID" />
+    </label>
+    <div class="row">
+      <button id="generateId">Generate new session ID</button>
+      <button id="startMic">Start mic</button>
+      <button id="stopMic">Stop mic</button>
+    </div>
+    <div class="row">
+      <button id="join">Join session</button>
+      <button id="createOffer">Create offer</button>
+      <button id="hangup">Hang up</button>
+    </div>
+    <p class="note"><span class="badge">Note</span>You must open the page twice and use the same session ID in both tabs. Create the offer on one side and answer will fire automatically on the other side.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Remote audio</h2>
+    <audio id="remoteAudio" autoplay playsinline></audio>
+  </div>
+
+  <div class="panel">
+    <h2>Log</h2>
+    <textarea id="log" readonly></textarea>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="webrtc.js"></script>
+</body>
+</html>

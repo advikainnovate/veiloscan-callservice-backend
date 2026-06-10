@@ -4,8 +4,9 @@ meta {
   seq: 3
 }
 
-get {
-  url: {{baseUrl}}/api/v1/calls/history
+post {
+  url: {{baseUrl}}/calls/session
+  body: json
   auth: bearer
 }
 
@@ -13,8 +14,18 @@ auth:bearer {
   token: {{accessToken}}
 }
 
+body:json {
+  {
+      "clientId": "{{clientId}}"
+    }
+}
+
+vars:pre-request {
+  clientId: 1
+}
+
 docs {
   # Call History
-
+  
   Returns the authenticated user's recent call history.
 }

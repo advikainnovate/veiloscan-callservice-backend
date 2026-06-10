@@ -1,0 +1,27 @@
+meta {
+  name: unt
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/v1/calls/session/{{sessionId}}/end
+  body: none
+  auth: inherit
+}
+
+body:json {
+  {
+      "clientId": "{{clientId}}"
+    }
+}
+
+vars:pre-request {
+  clientId: 1
+  sessionId: 51d51438-38e3-4d53-b637-9de3643f2a15
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

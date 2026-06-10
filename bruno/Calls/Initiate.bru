@@ -5,29 +5,22 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/api/v1/calls/initiate
+  url: {{baseUrl}}/api/v1/calls/session
   body: json
   data: {
-    "qrToken": "{{qrToken}}",
-    "callerId": "{{callerId}}",
-    "guestId": "{{guestId}}",
-    "guestIp": "{{guestIp}}"
+    "clientId": "{{clientId}}"
   }
-  auth: bearer
+  auth: none
 }
 
-auth:bearer {
-  token: {{accessToken}}
-}
+auth:none {}
 
 docs {
   # Initiate Call
 
-  Creates a new call session using a QR token.
+  Creates a new call session.
 
   ## Body
 
-  - `qrToken` (required)
-  - `callerId` or `guestId`
-  - `guestIp` when using anonymous guest
-}
+  - `clientId` (required)
+} 

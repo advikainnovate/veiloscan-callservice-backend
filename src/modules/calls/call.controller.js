@@ -1,5 +1,5 @@
 const callService =
-    require("./callSession.service");
+    require("./call.session.service");
 
 exports.createSession =
 async (req, res, next) => {
@@ -50,6 +50,46 @@ async (req, res, next) => {
 
         const session =
             await callService.endSession(
+                req.params.sessionId
+            );
+
+        return res.json({
+            success: true,
+            data: session
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.acceptSession =
+async (req, res, next) => {
+
+    try {
+
+        const session =
+            await callService.acceptSession(
+                req.params.sessionId
+            );
+
+        return res.json({
+            success: true,
+            data: session
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.rejectSession =
+async (req, res, next) => {
+
+    try {
+
+        const session =
+            await callService.rejectSession(
                 req.params.sessionId
             );
 

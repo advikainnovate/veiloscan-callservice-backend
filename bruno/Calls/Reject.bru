@@ -5,9 +5,8 @@ meta {
 }
 
 patch {
-  url: {{baseUrl}}/api/v1/calls/{{callId}}/reject
-  body: json
-  data: {}
+  url: {{baseUrl}}/api/v1/calls/session/{{callId}}/reject
+  body: none
   auth: bearer
 }
 
@@ -15,8 +14,12 @@ auth:bearer {
   token: {{accessToken}}
 }
 
+vars:pre-request {
+  callId: e308627f-1191-4686-a309-5e631ed26012
+}
+
 docs {
   # Reject Call
-
+  
   Rejects an incoming call request.
 }

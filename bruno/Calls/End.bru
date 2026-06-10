@@ -4,19 +4,17 @@ meta {
   seq: 12
 }
 
-patch {
-  url: {{baseUrl}}/api/v1/calls/{{callId}}/end
+post {
+  url: {{baseUrl}}/api/v1/calls/session/{{sessionId}}/end
   body: json
   data: {}
-  auth: bearer
+  auth: none
 }
 
-auth:bearer {
-  token: {{accessToken}}
-}
+auth:none {}
 
 docs {
   # End Call
 
   Ends an active call session.
-}
+} 

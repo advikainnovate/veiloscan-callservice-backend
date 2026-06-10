@@ -18,4 +18,14 @@ router.post(
     controller.endSession
 );
 
+router.patch(
+    "/session/:sessionId/accept",
+    controller.acceptSession
+);
+
+router.patch(
+    "/session/:sessionId/reject",
+    controller.rejectSession
+);
+
 module.exports = router;

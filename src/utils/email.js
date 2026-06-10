@@ -1,25 +1,35 @@
 const nodemailer = require('nodemailer');
 const { CONFIG } = require('../config');
 
-// Create reusable transporter
-const transporter = nodemailer.createTransport({
-    host: CONFIG.SMTP.HOST,
-    port: CONFIG.SMTP.PORT,
-    secure: CONFIG.SMTP.SECURE,
-    auth: {
-        user: CONFIG.SMTP.USER,
-        pass: CONFIG.SMTP.PASS,
-    },
-});
+// Create reusable transporter only when SMTP is configured
+let transporter = null;
 
-// Verify transporter configuration
-transporter.verify((error, success) => {
-    if (error) {
-        console.error('SMTP Configuration Error:', error);
-    } else {
-        console.log('SMTP Server is ready to send emails');
+if (CONFIG.SMTP.HOST) {
+    const smtpOptions = {
+        host: CONFIG.SMTP.HOST,
+        port: CONFIG.SMTP.PORT,
+        secure: CONFIG.SMTP.SECURE,
+    };
+
+    if (CONFIG.SMTP.USER && CONFIG.SMTP.PASS) {
+        smtpOptions.auth = {
+            user: CONFIG.SMTP.USER,
+            pass: CONFIG.SMTP.PASS,
+        };
     }
-});
+
+    transporter = nodemailer.createTransport(smtpOptions);
+
+    transporter.verify((error, success) => {
+        if (error) {
+            console.error('SMTP Configuration Error:', error);
+        } else {
+            console.log('SMTP Server is ready to send emails');
+        }
+    });
+} else {
+    console.warn('SMTP is not configured; email sending is disabled. Set SMTP_HOST, SMTP_USER, and SMTP_PASS to enable it.');
+}
 
 /**
  * Send OTP email to user
@@ -29,6 +39,11 @@ transporter.verify((error, success) => {
  * @returns {Promise<boolean>} - Success status
  */
 exports.sendOtpEmail = async (email, otp, userName = 'User') => {
+    if (!transporter) {
+        console.warn('SMTP transporter is not configured. OTP email will not be sent.');
+        return false;
+    }
+
     try {
         const mailOptions = {
             from: CONFIG.SMTP.FROM,

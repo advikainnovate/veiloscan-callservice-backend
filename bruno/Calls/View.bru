@@ -6,6 +6,7 @@ meta {
 
 get {
   url: {{baseUrl}}/api/v1/calls/{{callId}}/view
+  body: none
   auth: bearer
 }
 
@@ -13,8 +14,12 @@ auth:bearer {
   token: {{accessToken}}
 }
 
+vars:pre-request {
+  callId: e308627f-1191-4686-a309-5e631ed26012
+}
+
 docs {
   # View Call Session
-
+  
   Retrieves details for a specific call session.
 }

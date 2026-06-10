@@ -28,6 +28,38 @@ const activateSession = async (
     );
 };
 
+const acceptSession = async (
+    sessionId
+) => {
+
+    return activateSession(sessionId);
+};
+
+const rejectSession = async (
+    sessionId
+) => {
+
+    const session =
+        await callRepository.findBySessionId(
+            sessionId
+        );
+
+    if (!session) {
+        throw new Error(
+            "Session not found"
+        );
+    }
+
+    return callRepository.update(
+        sessionId,
+        {
+            status: "ended",
+            endedAt: new Date(),
+            durationSeconds: 0
+        }
+    );
+};
+
 const endSession = async (
     sessionId
 ) => {
@@ -65,5 +97,7 @@ const endSession = async (
 module.exports = {
     createSession,
     activateSession,
+    acceptSession,
+    rejectSession,
     endSession
 };

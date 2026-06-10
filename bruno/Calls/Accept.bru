@@ -5,9 +5,8 @@ meta {
 }
 
 patch {
-  url: {{baseUrl}}/api/v1/calls/{{callId}}/accept
-  body: json
-  data: {}
+  url: {{baseUrl}}/api/v1/calls/session/{{callId}}/accept
+  body: none
   auth: bearer
 }
 
@@ -15,8 +14,12 @@ auth:bearer {
   token: {{accessToken}}
 }
 
+vars:pre-request {
+  callId: 5e7276dc-e661-496c-8ea5-2bea2c26c84e
+}
+
 docs {
   # Accept Call
-
+  
   Accepts an incoming call.
 }
