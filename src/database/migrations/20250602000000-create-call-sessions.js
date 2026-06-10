@@ -3,6 +3,8 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
+        await queryInterface.sequelize.query('DROP TYPE IF EXISTS "enum_call_sessions_status";');
+
         await queryInterface.createTable('call_sessions', {
             id: {
                 type: Sequelize.UUID,
@@ -10,56 +12,19 @@ module.exports = {
                 allowNull: false,
                 primaryKey: true,
             },
-            callerId: {
-                type: Sequelize.UUID,
-                allowNull: true,
-                references: {
-                    model: 'users',
-                    key: 'id',
-                },
-                onDelete: 'CASCADE',
-                onUpdate: 'CASCADE',
-            },
-            receiverId: {
+            sessionId: {
                 type: Sequelize.UUID,
                 allowNull: false,
-                references: {
-                    model: 'users',
-                    key: 'id',
-                },
-                onDelete: 'CASCADE',
-                onUpdate: 'CASCADE',
+                unique: true,
             },
-            qrId: {
-                type: Sequelize.UUID,
+            clientId: {
+                type: Sequelize.STRING,
                 allowNull: false,
-            },
-            guestId: {
-                type: Sequelize.STRING(100),
-                allowNull: true,
-            },
-            guestIp: {
-                type: Sequelize.STRING(50),
-                allowNull: true,
-            },
-            callerType: {
-                type: Sequelize.STRING(20),
-                allowNull: false,
-                defaultValue: 'registered',
             },
             status: {
-                type: Sequelize.STRING(20),
+                type: Sequelize.ENUM('created', 'active', 'ended'),
                 allowNull: false,
-                defaultValue: 'initiated',
-            },
-            endedReason: {
-                type: Sequelize.STRING(50),
-                allowNull: true,
-            },
-            initiatedAt: {
-                type: Sequelize.DATE,
-                allowNull: false,
-                defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+                defaultValue: 'created',
             },
             startedAt: {
                 type: Sequelize.DATE,
@@ -67,6 +32,10 @@ module.exports = {
             },
             endedAt: {
                 type: Sequelize.DATE,
+                allowNull: true,
+            },
+            durationSeconds: {
+                type: Sequelize.INTEGER,
                 allowNull: true,
             },
             createdAt: {
@@ -96,25 +65,10 @@ module.exports = {
         } catch (err) {
             // ignore index already exists error
         }
-
-        try {
-            await queryInterface.addIndex('call_sessions', ['callerId'], {
-                name: 'call_sessions_caller_id_idx',
-            });
-        } catch (err) {
-            // ignore index already exists error
-        }
-
-        try {
-            await queryInterface.addIndex('call_sessions', ['receiverId'], {
-                name: 'call_sessions_receiver_id_idx',
-            });
-        } catch (err) {
-            // ignore index already exists error
-        }
     },
 
     async down(queryInterface) {
         await queryInterface.dropTable('call_sessions');
+        await queryInterface.sequelize.query('DROP TYPE IF EXISTS "enum_call_sessions_status";');
     },
 };

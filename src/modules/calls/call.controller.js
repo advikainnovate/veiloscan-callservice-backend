@@ -1,123 +1,64 @@
-const { errorResponse, successResponse } = require('../../helpers');
-const callService = require('./call.session.service');
+const callService =
+    require("./callSession.service");
 
-const sendServiceResponse = (res, response) => {
-    if (!response.success) {
-        return errorResponse(res, response.code, response.message, response.data);
-    }
-    return successResponse(res, response.code, response.message, response.data);
-};
+exports.createSession =
+async (req, res, next) => {
 
-const getActorId = (req) => req.user?.id || req.body.userId || req.query.userId;
-
-exports.initiateCall = async (req, res, next) => {
     try {
-        const response = await callService.initiateCall({
-            ...req.body,
-            callerId: req.user?.id || req.body.callerId,
-            guestIp: req.body.guestIp || req.ip,
+
+        const { clientId } = req.body;
+
+        const session =
+            await callService.createSession(
+                clientId || "unknown"
+            );
+
+        return res.status(201).json({
+            success: true,
+            data: session
         });
-        return sendServiceResponse(res, response);
-    } catch (error) {
-        next(error);
+
+    } catch (err) {
+        next(err);
     }
 };
 
-exports.initiateCallFromChat = async (req, res, next) => {
+exports.getSession =
+async (req, res, next) => {
+
     try {
-        const response = await callService.initiateCallFromChat(req.user?.id || req.body.callerId, req.body.chatSessionId);
-        return sendServiceResponse(res, response);
-    } catch (error) {
-        next(error);
+
+        const session =
+            await callService.getSession(
+                req.params.sessionId
+            );
+
+        return res.json({
+            success: true,
+            data: session
+        });
+
+    } catch (err) {
+        next(err);
     }
 };
 
-exports.updateCallStatus = async (req, res, next) => {
-    try {
-        const response = await callService.updateCallStatus(req.params.id, getActorId(req), req.body.status, req.body.endedReason);
-        return sendServiceResponse(res, response);
-    } catch (error) {
-        next(error);
-    }
-};
+exports.endSession =
+async (req, res, next) => {
 
-exports.getCallSession = async (req, res, next) => {
     try {
-        const response = await callService.getCallSessionForActor(req.params.id, getActorId(req));
-        return sendServiceResponse(res, response);
-    } catch (error) {
-        next(error);
-    }
-};
 
-exports.getCallHistory = async (req, res, next) => {
-    try {
-        const response = await callService.getUserCallHistory(getActorId(req), req.query.limit);
-        return sendServiceResponse(res, response);
-    } catch (error) {
-        next(error);
-    }
-};
+        const session =
+            await callService.endSession(
+                req.params.sessionId
+            );
 
-exports.getActiveCalls = async (req, res, next) => {
-    try {
-        const response = await callService.getActiveCalls(getActorId(req));
-        return sendServiceResponse(res, response);
-    } catch (error) {
-        next(error);
-    }
-};
+        return res.json({
+            success: true,
+            data: session
+        });
 
-exports.ringCall = async (req, res, next) => {
-    try {
-        const response = await callService.ringCall(req.params.id, getActorId(req));
-        return sendServiceResponse(res, response);
-    } catch (error) {
-        next(error);
-    }
-};
-
-exports.acceptCall = async (req, res, next) => {
-    try {
-        const response = await callService.acceptCall(req.params.id, getActorId(req));
-        return sendServiceResponse(res, response);
-    } catch (error) {
-        next(error);
-    }
-};
-
-exports.rejectCall = async (req, res, next) => {
-    try {
-        const response = await callService.rejectCall(req.params.id, getActorId(req));
-        return sendServiceResponse(res, response);
-    } catch (error) {
-        next(error);
-    }
-};
-
-exports.endCall = async (req, res, next) => {
-    try {
-        const response = await callService.endCall(req.params.id, getActorId(req), req.body.endedReason);
-        return sendServiceResponse(res, response);
-    } catch (error) {
-        next(error);
-    }
-};
-
-exports.getCallDuration = async (req, res, next) => {
-    try {
-        const response = await callService.getCallDuration(req.params.id);
-        return sendServiceResponse(res, response);
-    } catch (error) {
-        next(error);
-    }
-};
-
-exports.getDailyCallCount = async (req, res, next) => {
-    try {
-        const response = await callService.getDailyCallCount(req.params.userId);
-        return sendServiceResponse(res, response);
-    } catch (error) {
-        next(error);
+    } catch (err) {
+        next(err);
     }
 };
