@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Call Demo</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:20px;background:#f7f9fc}
+    .panel{background:#fff;padding:16px;border-radius:8px;border:1px solid #e6eef8;max-width:720px}
+    label{display:block;margin:8px 0}
+    input{padding:8px;width:100%;box-sizing:border-box}
+    button{padding:8px 12px;margin-right:8px}
+    audio{display:block;width:100%;margin-top:8px}
+    .row{display:flex;gap:8px}
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h2>Call Demo</h2>
+    <label>User ID
+      <input id="userId" placeholder="user-001">
+    </label>
+    <label>Session ID
+      <input id="sessionId" placeholder="session-abc123">
+    </label>
+
+    <div class="row" style="margin-top:12px">
+      <button id="joinBtn">Join</button>
+      <button id="startCallBtn">Start Call</button>
+      <button id="endCallBtn">End Call</button>
+    </div>
+
+    <div id="status" style="margin-top:12px;color:#333;font-size:14px;">Status: disconnected</div>
+    <p style="margin-top:12px;color:#444;font-size:14px;line-height:1.5;">Open this page in two browser tabs, enter the same Session ID in both tabs, click <strong>Join</strong> in each tab, then click <strong>Start Call</strong> to connect the two peers.</p>
+
+    <h3 style="margin-top:14px">Media</h3>
+    <label>Local Audio</label>
+    <audio id="localAudio" controls muted></audio>
+
+    <label>Remote Audio</label>
+    <audio id="remoteAudio" controls autoplay></audio>
+
+    <p style="margin-top:12px;color:#666">This demo is intentionally minimal — it shows the HTML structure and simple local-mic capture. Replace the JS calls with your signaling/SDK integration to make real calls.</p>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/public/demo/call-demo.js"></script>
+</body>
+</html>

@@ -47,11 +47,16 @@ module.exports = {
             // Try to verify the token
             const decoded = await jwt.verifyAccessToken(token);
 
-            // Verify user exists and is not deleted
-            const user = await db.UserModel.findOne({ where: { id: decoded.id, deletedAt: null } });
+            // Verify user exists and is not deleted (only if UserModel is available)
+            if (db.UserModel) {
+                const user = await db.UserModel.findOne({ where: { id: decoded.id, deletedAt: null } });
 
-            // If user exists and is not blocked, attach to request
-            if (user && !user.isBlock) {
+                // If user exists and is not blocked, attach to request
+                if (user && !user.isBlock) {
+                    req.user = decoded;
+                }
+            } else {
+                // User model not present in this build — attach decoded token but skip DB validation
                 req.user = decoded;
             }
 

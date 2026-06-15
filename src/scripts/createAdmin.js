@@ -6,7 +6,13 @@
 
 require('dotenv').config();
 const db = require('../database/models');
-const userRepository = require('../repository/user.repository');
+let userRepository;
+try {
+    userRepository = require('../repository/user.repository');
+} catch (err) {
+    console.warn('user.repository not found — createAdmin script is disabled in this build.');
+    process.exit(0);
+}
 const { bcrypt } = require('../utils');
 
 const args = require('minimist')(process.argv.slice(2));

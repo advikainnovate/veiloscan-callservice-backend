@@ -31,6 +31,18 @@ Object.keys(db).forEach((modelName) => {
     }
 });
 
+if (db.ChatRoom && db.ChatMessage) {
+    db.ChatRoom.hasMany(db.ChatMessage, {
+        foreignKey: 'roomId',
+        as: 'messages',
+    });
+
+    db.ChatMessage.belongsTo(db.ChatRoom, {
+        foreignKey: 'roomId',
+        as: 'room',
+    });
+}
+
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
