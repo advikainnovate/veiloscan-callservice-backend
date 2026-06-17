@@ -1,0 +1,24 @@
+meta {
+  name: Create Organization
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/organizations
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Acme Corp"
+  }
+}
+
+docs {
+  # Create Organization
+
+  Public endpoint — no API key required.
+  Creates a new organization. After creation, use the org ID to generate your first API key.
+}

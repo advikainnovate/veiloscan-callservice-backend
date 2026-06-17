@@ -1,48 +1,44 @@
 module.exports = (sequelize, DataTypes) => {
     const CallSession = sequelize.define(
-        "CallSession",
+        'CallSession',
         {
             id: {
                 type: DataTypes.UUID,
                 defaultValue: DataTypes.UUIDV4,
-                primaryKey: true
+                primaryKey: true,
             },
 
             sessionId: {
                 type: DataTypes.UUID,
                 allowNull: false,
-                unique: true
+                unique: true,
             },
 
             clientId: {
                 type: DataTypes.STRING,
-                allowNull: false
+                allowNull: false,
             },
 
             status: {
-                type: DataTypes.ENUM(
-                    "created",
-                    "active",
-                    "ended"
-                ),
-                defaultValue: "created"
+                type: DataTypes.ENUM('created', 'active', 'paused', 'ended'),
+                defaultValue: 'created',
             },
 
             startedAt: {
-                type: DataTypes.DATE
+                type: DataTypes.DATE,
             },
 
             endedAt: {
-                type: DataTypes.DATE
+                type: DataTypes.DATE,
             },
 
             durationSeconds: {
-                type: DataTypes.INTEGER
-            }
+                type: DataTypes.INTEGER,
+            },
         },
         {
-            tableName: "call_sessions",
-            timestamps: true
+            tableName: 'call_sessions',
+            timestamps: true,
         }
     );
 

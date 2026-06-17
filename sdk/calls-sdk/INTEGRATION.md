@@ -15,11 +15,10 @@ import { EVENTS } from './sdk/calls-sdk/constants.js';
 
 ```javascript
 const sdk = new CallSDK({
-  userId: 'user-123',                    // Your user ID
-  socketUrl: 'ws://localhost:4000',      // WebSocket server URL
-  iceServers: [
-    { urls: ['stun:stun.l.google.com:19302'] }
-  ]
+    apiKey: 'cp_live_xxxxxxxxx', // Required: Your organization API Key
+    userId: 'user-123', // Optional: Your user ID
+    socketUrl: 'http://localhost:4000', // Required: Socket.io server URL
+    iceServers: [{ urls: ['stun:stun.l.google.com:19302'] }],
 });
 ```
 
@@ -32,34 +31,38 @@ await sdk.connect();
 ### 4. Listen for Events
 
 ```javascript
-// Incoming call from another user
-sdk.on(EVENTS.INCOMING_CALL, (callData) => {
-  console.log('Incoming call from:', callData.callerId);
-  // Show accept/reject UI to user
+// A participant joined the room session
+sdk.on('participant-joined', (data) => {
+    console.log('Participant joined:', data.socketId);
 });
 
-// Call was accepted
-sdk.on(EVENTS.CALL_ACCEPTED, (data) => {
-  console.log('Call accepted!');
+// Call has officially started between two peers
+sdk.on('call-started', () => {
+    console.log('Call started!');
+});
+
+// Captured local media stream
+sdk.on('local-stream', (stream) => {
+    localAudioElement.srcObject = stream;
 });
 
 // Remote stream is ready
 sdk.on(EVENTS.REMOTE_STREAM, (stream) => {
-  // Play remote audio
-  audioElement.srcObject = stream;
+    // Play remote audio
+    audioElement.srcObject = stream;
 });
 
 // Call ended
-sdk.on(EVENTS.CALL_ENDED, (data) => {
-  console.log('Call ended');
+sdk.on('call-ended', (data) => {
+    console.log('Call ended because:', data.reason);
 });
 ```
 
-### 5. Initiate a Call
+### 5. Join a Call Session
 
 ```javascript
-// Start a call to another user
-await sdk.call('target-user-id');
+// Join a call room session (WebRTC connection is negotiated automatically)
+await sdk.joinSession('session-123');
 ```
 
 ## Complete Example
@@ -69,26 +72,28 @@ See `src/public/test-webrtc-sdk.js` and `src/public/test-webrtc.html` for a comp
 ### Running the Example
 
 1. Start the backend server:
-   ```bash
-   npm run dev
-   ```
+
+    ```bash
+    npm run dev
+    ```
 
 2. Open the test page in your browser:
-   ```
-   http://localhost:4000/public/test-webrtc.html
-   ```
+
+    ```
+    http://localhost:4000/public/test-webrtc.html
+    ```
 
 3. In the first tab:
-   - Enter "user-001" as Your User ID
-   - Click "Connect"
-   - Enter "user-002" in Target User ID
-   - Click "Initiate Call"
+    - Enter "user-001" as Your User ID
+    - Click "Connect"
+    - Enter "user-002" in Target User ID
+    - Click "Initiate Call"
 
 4. In a second tab (same page):
-   - Enter "user-002" as Your User ID
-   - Click "Connect"
-   - You should see an incoming call notification
-   - Click "Accept Call"
+    - Enter "user-002" as Your User ID
+    - Click "Connect"
+    - You should see an incoming call notification
+    - Click "Accept Call"
 
 5. Both tabs should now have active audio connection
 
@@ -127,12 +132,13 @@ User A                              User B
 
 ```javascript
 new CallSDK({
-  userId: string,           // Required: Your user ID
-  socketUrl: string,        // Required: WebSocket server URL (e.g., ws://localhost:4000)
-  iceServers: array,        // Optional: STUN/TURN servers for NAT traversal
-  audio: boolean,           // Optional: Enable audio (default: true)
-  video: boolean            // Optional: Enable video (default: false)
-})
+    apiKey: string, // Required: Your organization API key
+    userId: string, // Optional: Your user ID (auto-generated if omitted)
+    socketUrl: string, // Required: Socket.io server URL (e.g., http://localhost:4000)
+    iceServers: array, // Optional: STUN/TURN servers for NAT traversal
+    audio: boolean, // Optional: Enable audio (default: true)
+    video: boolean, // Optional: Enable video (default: false)
+});
 ```
 
 ### ICE Servers
@@ -141,44 +147,48 @@ For production, configure STUN/TURN servers:
 
 ```javascript
 iceServers: [
-  { urls: ['stun:stun.l.google.com:19302'] },
-  { urls: ['stun:stun1.l.google.com:19302'] },
-  {
-    urls: ['turn:your-turn-server.com'],
-    username: 'username',
-    credential: 'password'
-  }
-]
+    { urls: ['stun:stun.l.google.com:19302'] },
+    { urls: ['stun:stun1.l.google.com:19302'] },
+    {
+        urls: ['turn:your-turn-server.com'],
+        username: 'username',
+        credential: 'password',
+    },
+];
 ```
 
 ## Available Events
 
-| Event | Data | Description |
-|-------|------|-------------|
-| `incomingCall` | `{ callerId, offer }` | Incoming call received |
-| `callAccepted` | `{}` | Your call was accepted |
-| `callRejected` | `{}` | Your call was rejected |
-| `callEnded` | `{}` | Call has ended |
-| `remoteStream` | `MediaStream` | Remote audio/video stream |
+| Event                | Data                                                        | Description                                     |
+| -------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
+| `joined-session`     | `{ sessionId }`                                             | Emitted when you successfully join the session  |
+| `participant-joined` | `{ socketId, participants }`                                | Emitted when a participant joins the session    |
+| `participant-left`   | `{ socketId, participants, canReconnect }`                  | Emitted when a participant leaves the session   |
+| `call-started`       | `{}`                                                        | Emitted when the call officially connects       |
+| `call-paused`        | `{ reason, disconnectedSocketId, reconnectTimeoutSeconds }` | Emitted when call is temporarily paused         |
+| `call-resumed`       | `{}`                                                        | Emitted when the disconnected peer rejoins      |
+| `call-ended`         | `{ reason }`                                                | Emitted when the call is ended                  |
+| `local-stream`       | `MediaStream`                                               | Emitted when your local media stream is ready   |
+| `remoteStream`       | `MediaStream`                                               | Emitted when the remote peer stream is received |
 
 ## Troubleshooting
 
 ### Connection Issues
 
 1. **WebSocket connection failed**
-   - Verify Socket.IO is running on the backend
-   - Check the socketUrl is correct (e.g., `ws://localhost:4000`)
-   - Check browser console for CORS or network errors
+    - Verify Socket.IO is running on the backend
+    - Check the socketUrl is correct (e.g., `ws://localhost:4000`)
+    - Check browser console for CORS or network errors
 
 2. **No remote stream received**
-   - Verify microphone permissions are granted
-   - Check ICE servers are accessible
-   - Ensure both peers are connected and listening
+    - Verify microphone permissions are granted
+    - Check ICE servers are accessible
+    - Ensure both peers are connected and listening
 
 3. **Call signaling not working**
-   - Verify backend is running and Socket.IO is initialized
-   - Check that user IDs are correctly formatted
-   - Look at backend WebSocket logs for errors
+    - Verify backend is running and Socket.IO is initialized
+    - Check that user IDs are correctly formatted
+    - Look at backend WebSocket logs for errors
 
 ## Browser Compatibility
 

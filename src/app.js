@@ -40,6 +40,7 @@ app.use('/api-docs', swaggerAuthenticate, swaggerUi.serve, swaggerUi.setup(swagg
 
 // Serve files in the `public` folder
 app.use('/public', express.static(publicPath));
+app.use('/sdk', express.static(path.join(__dirname, '../sdk')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health check route

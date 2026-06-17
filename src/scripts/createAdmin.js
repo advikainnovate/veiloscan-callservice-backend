@@ -38,10 +38,7 @@ async function main() {
         const hashed = await bcrypt.generatePassword(password);
 
         if (existing) {
-            await db.UserModel.update(
-                { password: hashed, role: role, username },
-                { where: { id: existing.id } }
-            );
+            await db.UserModel.update({ password: hashed, role: role, username }, { where: { id: existing.id } });
             console.log(`Updated existing admin user (${email}) with role ${role}`);
             process.exit(0);
         }

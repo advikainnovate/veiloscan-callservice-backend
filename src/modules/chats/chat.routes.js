@@ -1,25 +1,11 @@
-const express =
-    require(
-        "express"
-    );
+const express = require('express');
 
-const router =
-    express.Router();
+const router = express.Router();
 
-const controller =
-    require(
-        "./chat.controller"
-    );
+const controller = require('./chat.controller');
 
-router.post(
-    "/rooms",
-    controller.createRoom
-);
+router.post('/rooms', controller.createRoom);
 
-router.get(
-    "/rooms/:roomId/messages",
-    controller.getMessages
-);
+router.get('/rooms/:roomId/messages', controller.getMessages);
 
-module.exports =
-    router;
+module.exports = router;

@@ -3,13 +3,17 @@ const router = express.Router();
 
 const callRoutes = require('../modules/calls/call.routes');
 const chatSessionRoutes = require('../modules/chats/chat.routes');
+const organizationRoutes = require('../modules/organizations/organization.routes');
+const { apiKeyAuth } = require('../middlewares');
+const { trackCallRequest, trackChatRequest } = require('../middlewares/tracking');
 
 router.get('/healthz', (req, res) => {
     res.status(200).json({ status: 'OK', message: 'Service is healthy', timestamp: new Date().toISOString() });
 });
 
-
-router.use('/calls', callRoutes);
-router.use('/chat-sessions', chatSessionRoutes);
+// Protect signaling and chat session HTTP endpoints with API key auth
+router.use('/calls', apiKeyAuth, trackCallRequest, callRoutes);
+router.use('/chat-sessions', apiKeyAuth, trackChatRequest, chatSessionRoutes);
+router.use('/organizations', organizationRoutes);
 
 module.exports = router;

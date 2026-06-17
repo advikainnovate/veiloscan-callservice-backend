@@ -1,0 +1,26 @@
+meta {
+  name: Create Api Key
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/organizations/{{orgId}}/api-keys
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Production"
+  }
+}
+
+docs {
+  # Create API Key
+
+  Public endpoint — no API key required (bootstrap step).
+  Use the org ID returned from Create Organization.
+  The raw API key is returned ONCE — store it securely.
+  The platform stores only a hash.
+}

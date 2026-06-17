@@ -1,0 +1,28 @@
+meta {
+  name: Update Organization
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/v1/organizations/me
+  body: json
+  auth: none
+}
+
+headers {
+  x-api-key: {{apiKey}}
+}
+
+body:json {
+  {
+    "name": "Acme Corp Updated"
+  }
+}
+
+docs {
+  # Update Organization
+
+  Updates the authenticated organization's details.
+  Authenticated via x-api-key header — identity is derived from the API key, not a URL param.
+}

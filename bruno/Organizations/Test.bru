@@ -1,0 +1,22 @@
+meta {
+  name: Test
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/organizations/77b913cc-8070-476f-b881-6faeb5582f3e/api-keys
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "name": "Default Key"
+    }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

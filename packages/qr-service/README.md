@@ -26,7 +26,7 @@ const { SequelizeAdapter } = require('@your-org/qr-service/adapters/database');
 
 // Initialize with your database adapter
 const qrService = new QRService({
-  adapter: new SequelizeAdapter(db),
+    adapter: new SequelizeAdapter(db),
 });
 
 // Create a QR code
@@ -34,9 +34,9 @@ const qrCode = await qrService.createQRCode();
 
 // Create a batch
 const batch = await qrService.createQRCodeBatch({
-  count: 100,
-  purpose: 'printing',
-  createdBy: 'admin-id'
+    count: 100,
+    purpose: 'printing',
+    createdBy: 'admin-id',
 });
 ```
 
@@ -55,10 +55,12 @@ app.use('/api/qr', qrRouter);
 ## Adapters
 
 ### Database Adapters
+
 - **SequelizeAdapter**: For Sequelize + PostgreSQL/MySQL/SQLite
 - Create custom adapters by implementing the `IQRDatabaseAdapter` interface
 
 ### Framework Adapters
+
 - **ExpressAdapter**: For Express.js
 - Create custom adapters by implementing the `IQRFrameworkAdapter` interface
 

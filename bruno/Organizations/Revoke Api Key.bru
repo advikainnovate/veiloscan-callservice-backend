@@ -1,0 +1,18 @@
+meta {
+  name: Revoke Api Key
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/organizations/api-keys/:apiKeyId/revoke
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Revoke API Key
+}

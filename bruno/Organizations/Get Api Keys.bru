@@ -1,0 +1,19 @@
+meta {
+  name: Get Api Keys
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/v1/organizations/:id/api-keys
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get API Keys
+  Returns list of API keys for the organization (apiKeyHash excluded).
+}

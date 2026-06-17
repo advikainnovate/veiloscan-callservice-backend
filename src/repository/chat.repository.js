@@ -1,100 +1,59 @@
-const {
-    ChatRoom,
-    ChatMessage
-} = require(
-    "../database/models"
-);
+const { ChatRoom, ChatMessage } = require('../database/models');
 
 module.exports = {
-
-    async createRoom(
-        payload
-    ) {
-
-        return ChatRoom.create(
-            payload
-        );
+    async createRoom(payload) {
+        return ChatRoom.create(payload);
     },
 
-    async getRoom(
-        roomId
-    ) {
-
-        return ChatRoom.findByPk(
-            roomId
-        );
+    async getRoom(roomId) {
+        return ChatRoom.findByPk(roomId);
     },
 
-    async saveMessage(
-        payload
-    ) {
-
+    async saveMessage(payload) {
         const messagePayload = {
             roomId: payload.roomId,
             senderId: payload.userId,
             receiverId: payload.receiverId || null,
             message: payload.message || payload.text,
-            messageType: payload.messageType || 'text'
+            messageType: payload.messageType || 'text',
         };
 
-        return ChatMessage.create(
-            messagePayload
-        );
+        return ChatMessage.create(messagePayload);
     },
 
-    async getMessages(
-        roomId
-    ) {
+    async getMessages(roomId) {
+        return ChatMessage.findAll({
+            where: {
+                roomId,
+            },
 
-        return ChatMessage.findAll(
+            order: [['createdAt', 'ASC']],
+        });
+    },
+
+    async markDelivered(messageId) {
+        return ChatMessage.update(
+            {
+                deliveredAt: new Date(),
+            },
             {
                 where: {
-                    roomId
+                    id: messageId,
                 },
-
-                order: [
-                    [
-                        "createdAt",
-                        "ASC"
-                    ]
-                ]
             }
         );
     },
 
-    async markDelivered(
-        messageId
-    ) {
-
+    async markRead(messageId) {
         return ChatMessage.update(
             {
-                deliveredAt:
-                    new Date()
+                readAt: new Date(),
             },
             {
                 where: {
-                    id:
-                        messageId
-                }
+                    id: messageId,
+                },
             }
         );
     },
-
-    async markRead(
-        messageId
-    ) {
-
-        return ChatMessage.update(
-            {
-                readAt:
-                    new Date()
-            },
-            {
-                where: {
-                    id:
-                        messageId
-                }
-            }
-        );
-    }
 };

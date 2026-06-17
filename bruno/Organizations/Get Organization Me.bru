@@ -1,0 +1,21 @@
+meta {
+  name: Get Organization Me
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/organizations/me
+  auth: none
+}
+
+headers {
+  x-api-key: {{apiKey}}
+}
+
+docs {
+  # Get My Organization
+
+  Returns the authenticated organization's info, API keys, and usage counters.
+  Authenticated via x-api-key header — the API key identifies the organization.
+}

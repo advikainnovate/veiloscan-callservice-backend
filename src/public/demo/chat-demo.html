@@ -1,51 +1,88 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Chat Demo</title>
-  <style>
-    body{font-family:Arial,Helvetica,sans-serif;margin:20px;background:#f7f9fc}
-    .panel{background:#fff;padding:16px;border-radius:8px;border:1px solid #e6eef8;max-width:720px}
-    .messages{min-height:180px;border:1px solid #e6eef8;padding:12px;border-radius:6px;background:#fbfcfd}
-    .message{padding:6px 8px;border-radius:6px;margin-bottom:8px}
-    .from-me{background:#d1ecf1}
-    .from-them{background:#e2e8f0}
-    .controls{display:flex;gap:8px;margin-top:8px}
-    input[type=text]{flex:1;padding:8px}
-  </style>
-</head>
-<body>
-  <div class="panel">
-    <h2>Chat Demo</h2>
-    <label>Room ID
-      <input id="roomId" placeholder="room-123">
-    </label>
-    <div style="margin-top:8px">
-      <button id="joinBtn">Join</button>
-    </div>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Chat Demo</title>
+        <style>
+            body {
+                font-family: Arial, Helvetica, sans-serif;
+                margin: 20px;
+                background: #f7f9fc;
+            }
+            .panel {
+                background: #fff;
+                padding: 16px;
+                border-radius: 8px;
+                border: 1px solid #e6eef8;
+                max-width: 720px;
+            }
+            .messages {
+                min-height: 180px;
+                border: 1px solid #e6eef8;
+                padding: 12px;
+                border-radius: 6px;
+                background: #fbfcfd;
+            }
+            .message {
+                padding: 6px 8px;
+                border-radius: 6px;
+                margin-bottom: 8px;
+            }
+            .from-me {
+                background: #d1ecf1;
+            }
+            .from-them {
+                background: #e2e8f0;
+            }
+            .controls {
+                display: flex;
+                gap: 8px;
+                margin-top: 8px;
+            }
+            input[type='text'] {
+                flex: 1;
+                padding: 8px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="panel">
+            <h2>Chat Demo</h2>
+            <label
+                >Room ID
+                <input id="roomId" placeholder="room-123" />
+            </label>
+            <div style="margin-top: 8px">
+                <button id="joinBtn">Join</button>
+            </div>
 
-    <div style="margin-top:12px">
-      <div class="messages" id="messages">
-        <div style="text-align:center;color:#888;margin-bottom:8px">Sample conversation</div>
-        <div class="message from-them">Hello</div>
-        <div class="message from-me">Hi</div>
-        <div class="message from-them">How are you</div>
-      </div>
+            <div style="margin-top: 12px">
+                <div class="messages" id="messages">
+                    <div style="text-align: center; color: #888; margin-bottom: 8px">Sample conversation</div>
+                    <div class="message from-them">Hello</div>
+                    <div class="message from-me">Hi</div>
+                    <div class="message from-them">How are you</div>
+                </div>
 
-      <div class="controls">
-        <input id="messageInput" type="text" placeholder="Type a message">
-        <button id="sendBtn">Send</button>
-      </div>
-    </div>
+                <div class="controls">
+                    <input id="messageInput" type="text" placeholder="Type a message" />
+                    <button id="sendBtn">Send</button>
+                </div>
+            </div>
 
-    <div id="status" style="margin-top:12px;color:#333;font-size:14px;">Status: disconnected</div>
-    <p style="margin-top:12px;color:#444;font-size:14px;line-height:1.5;">Open this page in two browser tabs, enter the same Room ID in both tabs, click <strong>Join</strong>, then send messages to see them appear in the other tab.</p>
+            <div id="status" style="margin-top: 12px; color: #333; font-size: 14px">Status: disconnected</div>
+            <p style="margin-top: 12px; color: #444; font-size: 14px; line-height: 1.5">
+                Open this page in two browser tabs, enter the same Room ID in both tabs, click <strong>Join</strong>, then send messages to
+                see them appear in the other tab.
+            </p>
 
-    <p style="margin-top:12px;color:#666">This is a minimal chat UI. It uses the backend socket service to broadcast messages to the room.</p>
-  </div>
+            <p style="margin-top: 12px; color: #666">
+                This is a minimal chat UI. It uses the backend socket service to broadcast messages to the room.
+            </p>
+        </div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/public/demo/chat-demo.js"></script>
-</body>
+        <script src="/socket.io/socket.io.js"></script>
+        <script type="module" src="/public/demo/chat-demo.js"></script>
+    </body>
 </html>

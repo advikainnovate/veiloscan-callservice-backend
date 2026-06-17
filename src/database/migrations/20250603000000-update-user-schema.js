@@ -49,9 +49,7 @@ module.exports = {
         }
 
         try {
-            await queryInterface.sequelize.query(
-                'UPDATE "users" SET "phone" = "phoneNumber" WHERE "phoneNumber" IS NOT NULL;'
-            );
+            await queryInterface.sequelize.query('UPDATE "users" SET "phone" = "phoneNumber" WHERE "phoneNumber" IS NOT NULL;');
         } catch (err) {
             // ignore if update fails
         }
@@ -70,9 +68,7 @@ module.exports = {
             unique: true,
         });
 
-        await queryInterface.sequelize.query(
-            'UPDATE "users" SET "phoneNumber" = "phone" WHERE "phone" IS NOT NULL;'
-        );
+        await queryInterface.sequelize.query('UPDATE "users" SET "phoneNumber" = "phone" WHERE "phone" IS NOT NULL;');
         await queryInterface.removeColumn('users', 'phone');
         await queryInterface.removeColumn('users', 'emergencyContact');
         await queryInterface.removeColumn('users', 'isBlock');

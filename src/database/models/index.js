@@ -43,6 +43,18 @@ if (db.ChatRoom && db.ChatMessage) {
     });
 }
 
+if (db.ApiKey && db.Organization) {
+    db.ApiKey.belongsTo(db.Organization, {
+        foreignKey: 'organizationId',
+        as: 'organization',
+    });
+
+    db.Organization.hasMany(db.ApiKey, {
+        foreignKey: 'organizationId',
+        as: 'apiKeys',
+    });
+}
+
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 

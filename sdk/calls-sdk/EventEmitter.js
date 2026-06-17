@@ -1,19 +1,19 @@
 export default class EventEmitter {
-  constructor() {
-    this.events = {};
-  }
-
-  on(event, callback) {
-    if (!this.events[event]) {
-      this.events[event] = [];
+    constructor() {
+        this.events = {};
     }
 
-    this.events[event].push(callback);
-  }
+    on(event, callback) {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
 
-  emit(event, data) {
-    if (!this.events[event]) return;
+        this.events[event].push(callback);
+    }
 
-    this.events[event].forEach((cb) => cb(data));
-  }
+    emit(event, data) {
+        if (!this.events[event]) return;
+
+        this.events[event].forEach((cb) => cb(data));
+    }
 }

@@ -39,8 +39,8 @@ const app = express();
 
 // Create router with optional auth middleware
 const qrRouter = createQRRouter(qrService, {
-  authMiddleware: validateAccessToken(['admin']),
-  validationMiddleware: validationMiddleware, // optional
+    authMiddleware: validateAccessToken(['admin']),
+    validationMiddleware: validationMiddleware, // optional
 });
 
 // Mount router
@@ -60,11 +60,11 @@ console.log(result.data); // { id, token, humanToken, status, ... }
 
 ```javascript
 const result = await qrService.createQRCodeBatch({
-  count: 100,
-  purpose: 'printing', // or 'digital'
-  createdBy: 'user-id',
-  notes: 'First batch',
-  printJobRef: 'JOB-001'
+    count: 100,
+    purpose: 'printing', // or 'digital'
+    createdBy: 'user-id',
+    notes: 'First batch',
+    printJobRef: 'JOB-001',
 });
 
 console.log(result.data.batch); // Batch info
@@ -75,9 +75,9 @@ console.log(result.data.qrCodes); // Array of 100 QR codes
 
 ```javascript
 const result = await qrService.claimQRCode(
-  userId,
-  token, // secure token OR
-  humanToken // human-readable token
+    userId,
+    token, // secure token OR
+    humanToken // human-readable token
 );
 ```
 
@@ -98,7 +98,7 @@ console.log(result.data); // Array of QR codes
 ### Get Unassigned QR Codes (with pagination)
 
 ```javascript
-const result = await qrService.getUnassignedQRCodes(limit = 50, cursor = null);
+const result = await qrService.getUnassignedQRCodes((limit = 50), (cursor = null));
 console.log(result.data.qrCodes); // QR codes
 console.log(result.data.cursor); // Next page cursor
 console.log(result.data.hasMore); // Has more pages
@@ -122,26 +122,21 @@ await qrService.reactivateQRCode(qrCodeId, requestedBy);
 The service throws specific exceptions:
 
 ```javascript
-const {
-  QRValidationException,
-  QRNotFoundException,
-  QRConflictException,
-  QRUnauthorizedException,
-} = require('@your-org/qr-service');
+const { QRValidationException, QRNotFoundException, QRConflictException, QRUnauthorizedException } = require('@your-org/qr-service');
 
 try {
-  await qrService.claimQRCode(userId, token);
+    await qrService.claimQRCode(userId, token);
 } catch (error) {
-  if (error instanceof QRValidationException) {
-    // Handle validation error
-    console.log(error.statusCode); // 400
-  } else if (error instanceof QRNotFoundException) {
-    // Handle not found
-    console.log(error.statusCode); // 404
-  } else if (error instanceof QRConflictException) {
-    // Handle conflict
-    console.log(error.statusCode); // 409
-  }
+    if (error instanceof QRValidationException) {
+        // Handle validation error
+        console.log(error.statusCode); // 400
+    } else if (error instanceof QRNotFoundException) {
+        // Handle not found
+        console.log(error.statusCode); // 404
+    } else if (error instanceof QRConflictException) {
+        // Handle conflict
+        console.log(error.statusCode); // 409
+    }
 }
 ```
 
@@ -153,20 +148,20 @@ Implement the `IQRDatabaseAdapter` interface:
 const { IQRDatabaseAdapter } = require('@your-org/qr-service');
 
 class MongoDBAdapter extends IQRDatabaseAdapter {
-  constructor(mongoDbClient) {
-    super();
-    this.db = mongoDbClient;
-  }
+    constructor(mongoDbClient) {
+        super();
+        this.db = mongoDbClient;
+    }
 
-  async createQRCode(payload) {
-    return this.db.collection('qr_codes').insertOne(payload);
-  }
+    async createQRCode(payload) {
+        return this.db.collection('qr_codes').insertOne(payload);
+    }
 
-  async findQRCodeById(id) {
-    return this.db.collection('qr_codes').findOne({ _id: id });
-  }
+    async findQRCodeById(id) {
+        return this.db.collection('qr_codes').findOne({ _id: id });
+    }
 
-  // ... implement all other methods
+    // ... implement all other methods
 }
 
 // Use with service
@@ -188,6 +183,7 @@ All service methods return a consistent response object:
 ```
 
 When used with Express, the `sendServiceResponse` middleware automatically:
+
 - Sets the correct HTTP status code
 - Formats JSON response
 - Handles errors
@@ -198,16 +194,16 @@ To integrate with a different framework (e.g., Fastify, Hapi), create adapters:
 
 ```javascript
 const createFastifyPlugin = (qrService) => {
-  return {
-    plugin: async (fastify) => {
-      fastify.post('/qr/create', async (request) => {
-        const result = await qrService.createQRCode();
-        return result.data;
-      });
+    return {
+        plugin: async (fastify) => {
+            fastify.post('/qr/create', async (request) => {
+                const result = await qrService.createQRCode();
+                return result.data;
+            });
 
-      // ... register other routes
-    }
-  };
+            // ... register other routes
+        },
+    };
 };
 
 // Use in Fastify
@@ -238,6 +234,7 @@ PATCH  /:qrCodeId/reactivate   - Reactivate QR code (admin)
 The Sequelize adapter expects these models:
 
 ### QrCodeModel
+
 ```javascript
 {
   id: UUID,
@@ -258,6 +255,7 @@ The Sequelize adapter expects these models:
 ```
 
 ### QrBatchModel
+
 ```javascript
 {
   id: UUID,

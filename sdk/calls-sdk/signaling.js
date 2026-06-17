@@ -1,31 +1,46 @@
+/* global io */
 export default class Signaling {
-  constructor(socketUrl) {
-    this.socketUrl = socketUrl;
-    this.socket = null;
-  }
+    constructor(socketUrl, apiKey) {
+        this.socketUrl = socketUrl;
+        this.apiKey = apiKey;
+        this.socket = null;
+    }
 
-  connect() {
-    return new Promise((resolve, reject) => {
-      this.socket = new WebSocket(this.socketUrl);
+    connect() {
+        return new Promise((resolve, reject) => {
+            const socketio = typeof io !== 'undefined' ? io : typeof window !== 'undefined' && window.io;
 
-      this.socket.onopen = () => resolve();
+            if (!socketio) {
+                return reject(
+                    new Error(
+                        'Socket.io client library (io) is not loaded. Please include <script src="/socket.io/socket.io.js"></script> or equivalent CDN script in your HTML.'
+                    )
+                );
+            }
 
-      this.socket.onerror = reject;
-    });
-  }
+            this.socket = socketio(this.socketUrl, {
+                auth: {
+                    apiKey: this.apiKey,
+                },
+                autoConnect: false,
+            });
 
-  send(event, payload) {
-    this.socket.send(
-      JSON.stringify({
-        event,
-        payload,
-      })
-    );
-  }
+            this.socket.connect();
 
-  on(callback) {
-    this.socket.onmessage = (message) => {
-      callback(JSON.parse(message.data));
-    };
-  }
+            this.socket.on('connect', () => resolve());
+            this.socket.on('connect_error', (err) => reject(err));
+        });
+    }
+
+    send(event, payload) {
+        if (this.socket) {
+            this.socket.emit(event, payload);
+        }
+    }
+
+    on(event, callback) {
+        if (this.socket) {
+            this.socket.on(event, callback);
+        }
+    }
 }

@@ -1,32 +1,13 @@
-const socketRegistry =
-    require(
-        "./socketRegistry"
-    );
+const socketRegistry = require('./socketRegistry');
 
 module.exports = {
+    registerSocket(socket, userId) {
+        socket.userId = userId;
 
-    registerSocket(
-        socket,
-        userId
-    ) {
-
-        socket.userId =
-            userId;
-
-        socketRegistry
-            .register(
-                userId,
-                socket.id
-            );
+        socketRegistry.register(userId, socket.id);
     },
 
-    removeSocket(
-        socket
-    ) {
-
-        socketRegistry
-            .unregister(
-                socket.id
-            );
-    }
+    removeSocket(socket) {
+        socketRegistry.unregister(socket.id);
+    },
 };

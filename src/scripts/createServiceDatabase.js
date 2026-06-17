@@ -21,10 +21,7 @@ async function main() {
         await client.connect();
         console.log(`Connected to postgres on ${host}:${port} as ${user}`);
 
-        const result = await client.query(
-            `SELECT 1 FROM pg_database WHERE datname = $1`,
-            [targetDb]
-        );
+        const result = await client.query(`SELECT 1 FROM pg_database WHERE datname = $1`, [targetDb]);
 
         if (result.rowCount > 0) {
             console.log(`Database '${targetDb}' already exists. Skipping creation.`);
