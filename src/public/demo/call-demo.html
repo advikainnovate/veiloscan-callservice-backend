@@ -3,82 +3,128 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Call Demo</title>
+        <title>Call Demo — Communication Platform</title>
         <style>
+            * { box-sizing: border-box; }
             body {
-                font-family: Arial, Helvetica, sans-serif;
-                margin: 20px;
-                background: #f7f9fc;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                margin: 0;
+                padding: 28px 20px;
+                background: #f0f4f8;
+                color: #1a202c;
             }
-            .panel {
+            .page { max-width: 560px; margin: 0 auto; }
+            h1 { font-size: 1.4rem; margin-bottom: 4px; }
+            .back { font-size: 13px; color: #3182ce; text-decoration: none; display: block; margin-bottom: 16px; }
+            .card {
                 background: #fff;
-                padding: 16px;
-                border-radius: 8px;
-                border: 1px solid #e6eef8;
-                max-width: 720px;
+                border-radius: 12px;
+                border: 1px solid #e2e8f0;
+                padding: 24px;
+                margin-bottom: 16px;
             }
-            label {
-                display: block;
-                margin: 8px 0;
-            }
+            label { display: block; font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 4px; margin-top: 14px; }
+            label:first-child { margin-top: 0; }
             input {
-                padding: 8px;
                 width: 100%;
-                box-sizing: border-box;
+                padding: 9px 12px;
+                border: 1px solid #cbd5e0;
+                border-radius: 7px;
+                font-size: 14px;
+                outline: none;
             }
+            input:focus { border-color: #3182ce; }
+            .btn-row { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
             button {
-                padding: 8px 12px;
-                margin-right: 8px;
+                padding: 9px 18px;
+                border: none;
+                border-radius: 7px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
             }
-            audio {
-                display: block;
-                width: 100%;
-                margin-top: 8px;
+            #connectBtn { background: #3182ce; color: #fff; }
+            #endCallBtn { background: #e53e3e; color: #fff; }
+            #connectBtn:disabled, #endCallBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+            .status-bar {
+                margin-top: 16px;
+                padding: 10px 14px;
+                border-radius: 7px;
+                font-size: 13px;
+                font-weight: 600;
+                background: #edf2f7;
+                color: #4a5568;
             }
-            .row {
-                display: flex;
-                gap: 8px;
+            .status-bar.connected { background: #c6f6d5; color: #276749; }
+            .status-bar.active { background: #bee3f8; color: #2a69ac; }
+            .status-bar.ended { background: #fed7d7; color: #9b2c2c; }
+            .status-bar.error { background: #fed7d7; color: #9b2c2c; }
+            audio { display: block; width: 100%; margin-top: 6px; border-radius: 6px; }
+            .log-box {
+                background: #1a202c;
+                color: #a0aec0;
+                font-family: monospace;
+                font-size: 12px;
+                padding: 12px;
+                border-radius: 8px;
+                height: 150px;
+                overflow-y: auto;
             }
+            .log-box .entry { margin-bottom: 4px; }
+            .log-box .entry.info { color: #90cdf4; }
+            .log-box .entry.ok { color: #9ae6b4; }
+            .log-box .entry.warn { color: #fbd38d; }
+            .log-box .entry.err { color: #fc8181; }
         </style>
     </head>
     <body>
-        <div class="panel">
-            <h2>Call Demo</h2>
-            <label
-                >User ID
-                <input id="userId" placeholder="user-001" />
-            </label>
-            <label
-                >Session ID
-                <input id="sessionId" placeholder="session-abc123" />
-            </label>
+        <div class="page">
+            <a class="back" href="/public/demos.html">← Back to demos</a>
+            <h1>Call Demo</h1>
 
-            <div class="row" style="margin-top: 12px">
-                <button id="joinBtn">Join</button>
-                <button id="startCallBtn">Start Call</button>
-                <button id="endCallBtn">End Call</button>
+            <div class="card">
+                <label>API Key</label>
+                <input id="apiKey" type="password" placeholder="cp_live_..." />
+
+                <label>Session ID</label>
+                <input id="sessionId" placeholder="e.g. demo-session-1" />
+
+                <label>Your User ID <span style="font-weight:400;color:#718096">(optional)</span></label>
+                <input id="userId" placeholder="auto-generated if empty" />
+
+                <div class="btn-row">
+                    <button id="connectBtn">Connect &amp; Join</button>
+                    <button id="endCallBtn" disabled>End Call</button>
+                </div>
+
+                <div class="status-bar" id="statusBar">Status: idle</div>
             </div>
 
-            <div id="status" style="margin-top: 12px; color: #333; font-size: 14px">Status: disconnected</div>
-            <p style="margin-top: 12px; color: #444; font-size: 14px; line-height: 1.5">
-                Open this page in two browser tabs, enter the same Session ID in both tabs, click <strong>Join</strong> in each tab, then
-                click <strong>Start Call</strong> to connect the two peers.
-            </p>
+            <div class="card">
+                <label>Local Audio</label>
+                <audio id="localAudio" muted controls></audio>
+                <label style="margin-top:14px">Remote Audio</label>
+                <audio id="remoteAudio" autoplay controls></audio>
+            </div>
 
-            <h3 style="margin-top: 14px">Media</h3>
-            <label>Local Audio</label>
-            <audio id="localAudio" controls muted></audio>
+            <div class="card">
+                <label>Event Log</label>
+                <div class="log-box" id="logBox"></div>
+            </div>
 
-            <label>Remote Audio</label>
-            <audio id="remoteAudio" controls autoplay></audio>
-
-            <p style="margin-top: 12px; color: #666">
-                This demo is intentionally minimal — it shows the HTML structure and simple local-mic capture. Replace the JS calls with
-                your signaling/SDK integration to make real calls.
-            </p>
+            <div class="card" style="color:#4a5568;font-size:13px;line-height:1.7">
+                <strong>How to demo:</strong>
+                <ol style="margin:8px 0 0;padding-left:18px">
+                    <li>Open this page in <strong>two browser tabs</strong></li>
+                    <li>Paste the same <strong>API Key</strong> and <strong>Session ID</strong> in both</li>
+                    <li>Click <strong>Connect &amp; Join</strong> in both tabs</li>
+                    <li>The call starts automatically when both peers are present</li>
+                    <li>Click <strong>End Call</strong> to hang up</li>
+                </ol>
+            </div>
         </div>
 
         <script src="/socket.io/socket.io.js"></script>
-        <script src="/public/demo/call-demo.js"></script>
+        <script type="module" src="/public/demo/call-demo.js"></script>
     </body>
 </html>

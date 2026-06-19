@@ -1,103 +1,135 @@
 import ChatManager from '/sdk/chats-sdk/chatManager.js';
 
-const joinBtn = document.getElementById('joinBtn');
-const sendBtn = document.getElementById('sendBtn');
-const messages = document.getElementById('messages');
-const input = document.getElementById('messageInput');
-const roomIdField = document.getElementById('roomId');
-const statusEl = document.getElementById('status');
+const apiKeyInput    = document.getElementById('apiKey');
+const roomIdInput    = document.getElementById('roomId');
+const userIdInput    = document.getElementById('userId');
+const joinBtn        = document.getElementById('joinBtn');
+const sendBtn        = document.getElementById('sendBtn');
+const messageInput   = document.getElementById('messageInput');
+const messagesEl     = document.getElementById('messages');
+const statusBar      = document.getElementById('statusBar');
+const typingEl       = document.getElementById('typingIndicator');
 
-let socket;
-let chat;
-let joined = false;
-const userId = `user-${Math.random().toString(36).slice(2, 8)}`;
+let chat   = null;
+let socket = null;
+let userId = null;
+let roomId = null;
+let typingTimer = null;
 
-function addMessage(text, className) {
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+function addMessage(text, type = 'them') {
     const el = document.createElement('div');
-    el.className = `message ${className}`;
+    el.className = `msg ${type}`;
     el.textContent = text;
-    messages.appendChild(el);
-    messages.scrollTop = messages.scrollHeight;
+    messagesEl.appendChild(el);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-function setStatus(status) {
-    if (statusEl) {
-        statusEl.textContent = `Status: ${status}`;
-    }
+function setStatus(text, cls = '') {
+    statusBar.textContent = `Status: ${text}`;
+    statusBar.className = `status-bar ${cls}`.trim();
 }
 
-function connectSocket() {
-    if (socket) return;
-    socket = io();
-    chat = new ChatManager(socket);
+// ─── join ─────────────────────────────────────────────────────────────────────
 
-    socket.on('connect', () => {
-        addMessage(`Connected as ${userId}`, 'from-me');
-        setStatus('connected');
-    });
+joinBtn.addEventListener('click', () => {
+    const apiKey = apiKeyInput.value.trim();
+    roomId       = roomIdInput.value.trim();
+    userId       = userIdInput.value.trim() || `user-${Math.random().toString(36).slice(2, 8)}`;
 
-    chat.onParticipantJoined((payload) => {
-        addMessage(`Participant joined: ${payload.socketId}`, 'from-them');
-    });
+    if (!apiKey) { alert('Paste your API key first'); return; }
+    if (!roomId) { alert('Enter a room ID'); return; }
 
-    chat.onMessage((message) => {
-        if (message.senderId === userId) return;
-        addMessage(`${message.senderId}: ${message.message}`, 'from-them');
-    });
+    joinBtn.disabled = true;
+    setStatus('connecting…');
 
-    socket.on('disconnect', () => {
-        addMessage('Disconnected from socket', 'from-them');
-        setStatus('disconnected');
+    // Connect socket with API key auth
+    socket = io(window.location.origin, {
+        auth: { apiKey },
+        autoConnect: false,
     });
 
     socket.on('connect_error', (err) => {
-        addMessage(`Socket connect_error: ${err.message || err}`, 'from-them');
-        setStatus('connect_error');
+        setStatus(`connection failed: ${err.message}`, 'error');
+        addMessage(`Connection failed: ${err.message}`, 'system');
+        joinBtn.disabled = false;
     });
 
-    socket.on('connect_timeout', () => {
-        addMessage('Socket connect_timeout', 'from-them');
-        setStatus('connect_timeout');
+    socket.on('connect', () => {
+        chat = new ChatManager(socket);
+
+        // ── events ──
+        chat.onParticipantJoined(({ socketId }) => {
+            if (socketId !== socket.id) {
+                addMessage(`${socketId.slice(0, 8)}… joined the room`, 'system');
+            }
+        });
+
+        chat.onParticipantLeft(({ socketId }) => {
+            addMessage(`${socketId.slice(0, 8)}… left the room`, 'system');
+        });
+
+        chat.onMessage((message) => {
+            if (message.senderId === userId) return; // already shown on send
+            addMessage(`${message.senderId}: ${message.message}`, 'them');
+        });
+
+        chat.onTyping(({ userId: typingUser }) => {
+            if (typingUser === userId) return;
+            typingEl.textContent = `${typingUser} is typing…`;
+        });
+
+        chat.onStopTyping(({ userId: typingUser }) => {
+            if (typingUser === userId) return;
+            typingEl.textContent = '';
+        });
+
+        socket.on('message-error', ({ error }) => {
+            addMessage(`Failed to send: ${error}`, 'system');
+        });
+
+        // ── join room ──
+        chat.joinRoom(roomId, userId);
+        addMessage(`You joined as ${userId}`, 'system');
+        setStatus(`joined room: ${roomId}`, 'joined');
+
+        sendBtn.disabled    = false;
+        messageInput.disabled = false;
+        messageInput.focus();
     });
 
-    socket.on('error', (err) => {
-        addMessage(`Socket error: ${err.message || err}`, 'from-them');
-        setStatus('socket_error');
-    });
-
-    socket.on('message-error', (errorPayload) => {
-        setStatus(`message error: ${errorPayload.error}`);
-        addMessage(`Message failed: ${errorPayload.error}`, 'from-them');
-    });
-}
-
-joinBtn.addEventListener('click', () => {
-    const roomId = roomIdField.value.trim();
-    if (!roomId) {
-        alert('Enter a room ID first');
-        return;
-    }
-    connectSocket();
-    chat.joinRoom(roomId, userId);
-    joined = true;
-    addMessage(`Joined room ${roomId}`, 'from-me');
-    setStatus(`joined ${roomId}`);
+    socket.connect();
 });
 
-sendBtn.addEventListener('click', () => {
-    if (!joined) {
-        alert('Join a room first');
-        return;
+// ─── send ─────────────────────────────────────────────────────────────────────
+
+function sendMessage() {
+    const text = messageInput.value.trim();
+    if (!text || !chat) return;
+
+    chat.sendMessage({ roomId, userId, message: text });
+    addMessage(`Me: ${text}`, 'me');
+    messageInput.value = '';
+
+    // stop typing indicator
+    chat.stopTyping({ roomId, userId });
+    clearTimeout(typingTimer);
+    typingTimer = null;
+}
+
+sendBtn.addEventListener('click', sendMessage);
+
+messageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { sendMessage(); return; }
+
+    // typing indicator
+    if (!typingTimer && chat) {
+        chat.typing({ roomId, userId });
     }
-    const roomId = roomIdField.value.trim();
-    const text = input.value.trim();
-    if (!text) return;
-    const payload = {
-        roomId,
-        senderId: userId,
-        message: text,
-    };
-    chat.sendMessage(payload);
-    addMessage(`Me: ${text}`, 'from-me');
-    input.value = '';
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+        if (chat) chat.stopTyping({ roomId, userId });
+        typingTimer = null;
+    }, 2000);
 });

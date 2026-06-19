@@ -5,15 +5,18 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/v1/organizations/:id/api-keys
-  auth: bearer
+  url: {{baseUrl}}/api/v1/organizations/me/api-keys
+  auth: none
 }
 
-auth:bearer {
-  token: {{accessToken}}
+headers {
+  x-api-key: {{apiKey}}
 }
 
 docs {
   # Get API Keys
-  Returns list of API keys for the organization (apiKeyHash excluded).
+
+  Returns the list of API keys for the authenticated organization.
+  apiKeyHash is excluded from the response.
+  Requires x-api-key header.
 }

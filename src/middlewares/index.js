@@ -1,5 +1,13 @@
+const { apiKeyAuth, socketApiKeyAuth } = require('./authorisation');
+const { trackCallRequest, trackChatRequest } = require('./tracking');
+const { swaggerAuthenticate } = require('./swagger.middlewares');
 const validation = require('./validation');
+
 module.exports = {
-    ...require('./authorisation'),
+    apiKeyAuth,
+    socketApiKeyAuth,
+    trackCallRequest,
+    trackChatRequest,
+    swaggerAuthenticate,
     validationMiddleware: validation,
 };

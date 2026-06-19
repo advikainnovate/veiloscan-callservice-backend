@@ -1,59 +1,50 @@
-const crypto = require('crypto');
 const organizationRepository = require('../../repository/organization.repository');
+const { generateApiKey, hashApiKey } = require('../../utils/apikey');
 
-class OrganizationService {
-    generateApiKey() {
-        return `cp_live_${crypto.randomBytes(32).toString('hex')}`;
-    }
+const createOrganization = async (data) => {
+    return organizationRepository.create(data);
+};
 
-    hashApiKey(apiKey) {
-        return crypto.createHash('sha256').update(apiKey).digest('hex');
-    }
+const getOrganizationById = async (id) => {
+    return organizationRepository.findById(id);
+};
 
-    async createOrganization(data) {
-        return organizationRepository.create(data);
-    }
+const updateOrganization = async (id, data) => {
+    return organizationRepository.update(id, data);
+};
 
-    async getOrganizations() {
-        return organizationRepository.findAll();
-    }
+const deleteOrganization = async (id) => {
+    return organizationRepository.delete(id);
+};
 
-    async getOrganizationById(id) {
-        return organizationRepository.findById(id);
-    }
+const createApiKey = async (organizationId, name) => {
+    const rawApiKey = generateApiKey();
+    const apiKeyHash = hashApiKey(rawApiKey);
 
-    async updateOrganization(id, data) {
-        return organizationRepository.update(id, data);
-    }
+    await organizationRepository.createApiKey({
+        organizationId,
+        name,
+        apiKeyHash,
+        isActive: true,
+    });
 
-    async deleteOrganization(id) {
-        return organizationRepository.delete(id);
-    }
+    return { apiKey: rawApiKey };
+};
 
-    async createApiKey(organizationId, name) {
-        const rawApiKey = this.generateApiKey();
+const getApiKeys = async (organizationId) => {
+    return organizationRepository.getApiKeys(organizationId);
+};
 
-        const apiKeyHash = this.hashApiKey(rawApiKey);
+const revokeApiKey = async (apiKeyId, organizationId) => {
+    return organizationRepository.revokeApiKey(apiKeyId, organizationId);
+};
 
-        await organizationRepository.createApiKey({
-            organizationId,
-            name,
-            apiKeyHash,
-            isActive: true,
-        });
-
-        return {
-            apiKey: rawApiKey,
-        };
-    }
-
-    async getApiKeys(organizationId) {
-        return organizationRepository.getApiKeys(organizationId);
-    }
-
-    async revokeApiKey(apiKeyId, organizationId) {
-        return organizationRepository.revokeApiKey(apiKeyId, organizationId);
-    }
-}
-
-module.exports = new OrganizationService();
+module.exports = {
+    createOrganization,
+    getOrganizationById,
+    updateOrganization,
+    deleteOrganization,
+    createApiKey,
+    getApiKeys,
+    revokeApiKey,
+};

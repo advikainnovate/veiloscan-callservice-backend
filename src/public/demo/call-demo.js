@@ -1,185 +1,129 @@
-const joinBtn = document.getElementById('joinBtn');
-const startCallBtn = document.getElementById('startCallBtn');
-const endCallBtn = document.getElementById('endCallBtn');
-const localAudio = document.getElementById('localAudio');
-const remoteAudio = document.getElementById('remoteAudio');
-const userIdField = document.getElementById('userId');
-const sessionIdField = document.getElementById('sessionId');
-const statusEl = document.getElementById('status');
+import CallSDK from '/sdk/calls-sdk/index.js';
 
-let socket;
-let peerConnection;
-let localStream = null;
-let joined = false;
+const apiKeyInput   = document.getElementById('apiKey');
+const sessionInput  = document.getElementById('sessionId');
+const userIdInput   = document.getElementById('userId');
+const connectBtn    = document.getElementById('connectBtn');
+const endCallBtn    = document.getElementById('endCallBtn');
+const localAudio    = document.getElementById('localAudio');
+const remoteAudio   = document.getElementById('remoteAudio');
+const statusBar     = document.getElementById('statusBar');
+const logBox        = document.getElementById('logBox');
 
-const iceConfig = {
-    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-};
+let sdk = null;
 
-const log = (message) => {
-    console.log(`[Call Demo] ${message}`);
-    if (statusEl) {
-        statusEl.textContent = `Status: ${message}`;
-    }
-};
+// ─── helpers ─────────────────────────────────────────────────────────────────
 
-async function initLocalStream() {
-    if (!localStream) {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        localAudio.srcObject = localStream;
-    }
+function log(msg, level = 'info') {
+    const el = document.createElement('div');
+    el.className = `entry ${level}`;
+    el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    logBox.appendChild(el);
+    logBox.scrollTop = logBox.scrollHeight;
 }
 
-function setStatus(status) {
-    if (statusEl) {
-        statusEl.textContent = `Status: ${status}`;
-    }
+function setStatus(text, cls = '') {
+    statusBar.textContent = `Status: ${text}`;
+    statusBar.className = `status-bar ${cls}`.trim();
 }
 
-function initSocket() {
-    if (socket) return;
-    socket = io();
+// ─── connect & join ───────────────────────────────────────────────────────────
 
-    socket.on('connect', () => {
-        log(`Socket connected ${socket.id}`);
-        setStatus('connected');
-    });
+connectBtn.addEventListener('click', async () => {
+    const apiKey    = apiKeyInput.value.trim();
+    const sessionId = sessionInput.value.trim();
+    const userId    = userIdInput.value.trim() || `user-${Math.random().toString(36).slice(2, 8)}`;
 
-    socket.on('participant-joined', (payload) => {
-        log(`Participant joined: ${JSON.stringify(payload)}`);
-        setStatus(`joined, participants: ${payload.participants}`);
+    if (!apiKey)    { alert('Paste your API key first'); return; }
+    if (!sessionId) { alert('Enter a session ID'); return; }
 
-        if (payload.participants === 2) {
-            log('Peer connected — ready to start call');
-            setStatus('peer connected');
-        }
-    });
+    connectBtn.disabled = true;
+    setStatus('connecting…');
+    log(`Connecting as ${userId}`);
 
-    socket.on('call-started', () => {
-        log('Call started');
-        setStatus('call started');
-    });
-
-    socket.on('offer', async (data) => {
-        log('Received offer');
-        await initLocalStream();
-        startPeerConnection();
-        localStream.getTracks().forEach((track) => peerConnection.addTrack(track, localStream));
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        socket.emit('answer', {
-            sessionId: data.sessionId,
-            answer,
-            senderId: userIdField.value || 'guest',
+    try {
+        sdk = new CallSDK({
+            apiKey,
+            userId,
+            socketUrl: window.location.origin,
+            audio: true,
+            video: false,
         });
-    });
 
-    socket.on('answer', async (data) => {
-        log('Received answer');
-        if (peerConnection) {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-        }
-    });
+        // ── events ──
+        sdk.on('participant-joined', (payload) => {
+            log(`Participant joined — total: ${payload.participants}`, 'ok');
+            setStatus(`waiting for peer (${payload.participants}/2)`, 'connected');
+        });
 
-    socket.on('ice-candidate', async (data) => {
-        log('Received ICE candidate');
-        if (peerConnection && data.candidate) {
-            try {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-            } catch (error) {
-                console.warn('ICE candidate failed', error);
-            }
-        }
-    });
+        sdk.on('call-started', () => {
+            log('Call started — WebRTC negotiation in progress', 'ok');
+            setStatus('call active', 'active');
+        });
 
-    socket.on('disconnect', () => {
-        log('Socket disconnected');
-        setStatus('disconnected');
-    });
+        sdk.on('local-stream', (stream) => {
+            localAudio.srcObject = stream;
+            log('Microphone captured', 'ok');
+        });
 
-    socket.on('connect_error', (err) => {
-        console.error('Socket connect_error', err);
-        log('Connect error');
-        setStatus('connect_error');
-    });
+        sdk.on('remote-stream', (stream) => {
+            remoteAudio.srcObject = stream;
+            log('Remote audio stream received', 'ok');
+        });
 
-    socket.on('connect_timeout', () => {
-        log('Connect timeout');
-        setStatus('connect_timeout');
-    });
+        sdk.on('call-paused', ({ reason }) => {
+            log(`Call paused — ${reason}`, 'warn');
+            setStatus('call paused (reconnecting…)', 'connected');
+        });
 
-    socket.on('error', (err) => {
-        console.error('Socket error', err);
-        log('Socket error');
-        setStatus('socket_error');
-    });
-}
+        sdk.on('call-resumed', () => {
+            log('Call resumed', 'ok');
+            setStatus('call active', 'active');
+        });
 
-function startPeerConnection() {
-    if (peerConnection) return;
-    peerConnection = new RTCPeerConnection(iceConfig);
+        sdk.on('call-ended', ({ reason }) => {
+            log(`Call ended — ${reason}`, 'warn');
+            setStatus('call ended', 'ended');
+            endCallBtn.disabled = true;
+            connectBtn.disabled = false;
+            localAudio.srcObject  = null;
+            remoteAudio.srcObject = null;
+        });
 
-    peerConnection.onicecandidate = ({ candidate }) => {
-        if (candidate && socket && sessionIdField.value.trim()) {
-            socket.emit('ice-candidate', {
-                sessionId: sessionIdField.value.trim(),
-                candidate,
-                senderId: userIdField.value || 'guest',
-            });
-        }
-    };
+        sdk.on('participant-left', ({ socketId, participants }) => {
+            log(`Participant left (${socketId}), remaining: ${participants}`, 'warn');
+        });
 
-    peerConnection.ontrack = ({ streams }) => {
-        remoteAudio.srcObject = streams[0];
-    };
-}
+        sdk.on('error', (err) => {
+            log(`Error: ${err.message || err}`, 'err');
+            setStatus('error', 'error');
+        });
 
-async function joinSession() {
-    const sessionId = sessionIdField.value.trim();
-    if (!sessionId) {
-        alert('Enter a session ID first');
-        return;
+        // ── connect then join ──
+        await sdk.connect();
+        log('Socket authenticated', 'ok');
+        setStatus('joined — waiting for peer', 'connected');
+
+        await sdk.joinSession(sessionId);
+        log(`Joined session: ${sessionId}`, 'ok');
+        endCallBtn.disabled = false;
+
+    } catch (err) {
+        log(`Failed to connect: ${err.message}`, 'err');
+        setStatus('connection failed', 'error');
+        connectBtn.disabled = false;
     }
-    initSocket();
-    socket.emit('join-session', { sessionId });
-    joined = true;
-    log(`Joined session ${sessionId}`);
-}
+});
 
-async function startCall() {
-    if (!joined) {
-        alert('Join a session first');
-        return;
-    }
-    await initLocalStream();
-    startPeerConnection();
-    localStream.getTracks().forEach((track) => peerConnection.addTrack(track, localStream));
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
-    socket.emit('offer', {
-        sessionId: sessionIdField.value.trim(),
-        offer,
-        senderId: userIdField.value || 'guest',
-    });
-    log('Sent offer');
-}
+// ─── end call ────────────────────────────────────────────────────────────────
 
-function endCall() {
-    if (peerConnection) {
-        peerConnection.close();
-        peerConnection = null;
-    }
-    if (localStream) {
-        localStream.getTracks().forEach((track) => track.stop());
-        localStream = null;
-    }
-    localAudio.srcObject = null;
+endCallBtn.addEventListener('click', async () => {
+    if (!sdk) return;
+    await sdk.endCall();
+    log('End call sent', 'warn');
+    setStatus('ended', 'ended');
+    endCallBtn.disabled = true;
+    connectBtn.disabled = false;
+    localAudio.srcObject  = null;
     remoteAudio.srcObject = null;
-    log('Call ended');
-    setStatus('ended');
-}
-
-joinBtn.addEventListener('click', joinSession);
-startCallBtn.addEventListener('click', startCall);
-endCallBtn.addEventListener('click', endCall);
+});

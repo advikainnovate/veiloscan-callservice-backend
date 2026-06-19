@@ -1,18 +1,21 @@
 meta {
   name: Delete Organization
   type: http
-  seq: 5
+  seq: 6
 }
 
 delete {
-  url: {{baseUrl}}/api/v1/organizations/:id
-  auth: bearer
+  url: {{baseUrl}}/api/v1/organizations/me
+  auth: none
 }
 
-auth:bearer {
-  token: {{accessToken}}
+headers {
+  x-api-key: {{apiKey}}
 }
 
 docs {
   # Delete Organization
+
+  Deletes the authenticated organization.
+  Identity is derived from the x-api-key header — no org ID needed in the URL.
 }

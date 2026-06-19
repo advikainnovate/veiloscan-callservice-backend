@@ -1,10 +1,6 @@
-const crypto = require('crypto');
 const db = require('../database/models');
 const { UnauthorizedException } = require('../helpers/errorResponse');
-
-const hashApiKey = (apiKey) => {
-    return crypto.createHash('sha256').update(apiKey).digest('hex');
-};
+const { hashApiKey } = require('../utils/apikey');
 
 const apiKeyAuth = async (req, res, next) => {
     try {

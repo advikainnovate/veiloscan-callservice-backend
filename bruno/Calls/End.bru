@@ -1,20 +1,26 @@
 meta {
   name: End Call
   type: http
-  seq: 12
+  seq: 5
 }
 
 post {
   url: {{baseUrl}}/api/v1/calls/session/{{sessionId}}/end
-  body: json
-  data: {}
+  body: none
   auth: none
 }
 
-auth:none {}
+headers {
+  x-api-key: {{apiKey}}
+}
+
+vars:pre-request {
+  sessionId: e308627f-1191-4686-a309-5e631ed26012
+}
 
 docs {
   # End Call
 
   Ends an active call session.
-} 
+  Requires x-api-key header to identify the organization.
+}

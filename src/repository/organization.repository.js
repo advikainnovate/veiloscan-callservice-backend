@@ -1,64 +1,52 @@
 const db = require('../database/models');
 
-class OrganizationRepository {
-    async create(data) {
-        return db.Organization.create(data);
-    }
+const create = async (data) => {
+    return db.Organization.create(data);
+};
 
-    async findAll() {
-        return db.Organization.findAll({
-            order: [['createdAt', 'DESC']],
-        });
-    }
+const findById = async (id) => {
+    return db.Organization.findByPk(id);
+};
 
-    async findById(id) {
-        return db.Organization.findByPk(id);
-    }
+const update = async (id, data) => {
+    await db.Organization.update(data, { where: { id } });
+    return findById(id);
+};
 
-    async update(id, data) {
-        await db.Organization.update(data, {
-            where: { id },
-        });
+const deleteById = async (id) => {
+    return db.Organization.destroy({ where: { id } });
+};
 
-        return this.findById(id);
-    }
+const createApiKey = async (data) => {
+    return db.ApiKey.create(data);
+};
 
-    async delete(id) {
-        return db.Organization.destroy({
-            where: { id },
-        });
-    }
+const getApiKeys = async (organizationId) => {
+    return db.ApiKey.findAll({
+        where: { organizationId },
+        attributes: { exclude: ['apiKeyHash'] },
+        order: [['createdAt', 'DESC']],
+    });
+};
 
-    async createApiKey(data) {
-        return db.ApiKey.create(data);
-    }
+const findApiKeyById = async (id) => {
+    return db.ApiKey.findByPk(id);
+};
 
-    async getApiKeys(organizationId) {
-        return db.ApiKey.findAll({
-            where: {
-                organizationId,
-            },
-            attributes: {
-                exclude: ['apiKeyHash'],
-            },
-            order: [['createdAt', 'DESC']],
-        });
-    }
+const revokeApiKey = async (id, organizationId) => {
+    return db.ApiKey.update(
+        { isActive: false },
+        { where: { id, organizationId } }
+    );
+};
 
-    async findApiKeyById(id) {
-        return db.ApiKey.findByPk(id);
-    }
-
-    async revokeApiKey(id, organizationId) {
-        return db.ApiKey.update(
-            {
-                isActive: false,
-            },
-            {
-                where: { id, organizationId },
-            }
-        );
-    }
-}
-
-module.exports = new OrganizationRepository();
+module.exports = {
+    create,
+    findById,
+    update,
+    delete: deleteById,
+    createApiKey,
+    getApiKeys,
+    findApiKeyById,
+    revokeApiKey,
+};

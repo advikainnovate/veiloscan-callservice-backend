@@ -39,12 +39,14 @@ const endSession = async (sessionId) => {
     const session = await callRepository.findBySessionId(sessionId);
 
     if (!session) {
-        throw new Error('Session not found');
+        // Session was never persisted (e.g. socket-only demo) — nothing to update
+        return null;
     }
 
     const endedAt = new Date();
-
-    const durationSeconds = Math.floor((endedAt - session.startedAt) / 1000);
+    const durationSeconds = session.startedAt
+        ? Math.floor((endedAt - session.startedAt) / 1000)
+        : 0;
 
     return callRepository.update(sessionId, {
         status: 'ended',

@@ -1,25 +1,26 @@
 meta {
   name: Accept Call
   type: http
-  seq: 10
+  seq: 3
 }
 
 patch {
-  url: {{baseUrl}}/api/v1/calls/session/{{callId}}/accept
+  url: {{baseUrl}}/api/v1/calls/session/{{sessionId}}/accept
   body: none
-  auth: bearer
+  auth: none
 }
 
-auth:bearer {
-  token: {{accessToken}}
+headers {
+  x-api-key: {{apiKey}}
 }
 
 vars:pre-request {
-  callId: 5e7276dc-e661-496c-8ea5-2bea2c26c84e
+  sessionId: 5e7276dc-e661-496c-8ea5-2bea2c26c84e
 }
 
 docs {
   # Accept Call
-  
-  Accepts an incoming call.
+
+  Accepts an incoming call session.
+  Requires x-api-key header to identify the organization.
 }

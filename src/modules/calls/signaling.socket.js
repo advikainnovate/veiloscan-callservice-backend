@@ -188,9 +188,7 @@ module.exports = (io) => {
          */
         socket.on('end-call', async ({ sessionId }) => {
             try {
-                await callService.endSession(sessionId);
-
-                // Notify all participants
+                // Notify all participants FIRST — before leaving the room
                 io.to(sessionId).emit('call-ended', {
                     reason: 'user-ended',
                     endedBy: socket.id,
@@ -200,6 +198,13 @@ module.exports = (io) => {
                 roomManager.leaveRoom(sessionId, socket.id);
                 socket.leave(sessionId);
                 clearSessionTimers(sessionId);
+
+                // Update DB — best effort, don't let failure block the end
+                try {
+                    await callService.endSession(sessionId);
+                } catch (dbErr) {
+                    console.error('end-call DB update failed (non-fatal):', dbErr.message);
+                }
 
                 console.log(`Session ${sessionId} ended by user ${socket.id}`);
             } catch (error) {

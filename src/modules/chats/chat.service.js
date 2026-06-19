@@ -1,15 +1,19 @@
 const chatRepository = require('../../repository/chat.repository');
 
+const createRoom = async (data) => {
+    return chatRepository.createRoom(data);
+};
+
+const saveMessage = async (data) => {
+    return chatRepository.saveMessage(data);
+};
+
+const getMessages = async (roomId) => {
+    return chatRepository.getMessages(roomId);
+};
+
 module.exports = {
-    async createRoom(data) {
-        return chatRepository.createRoom(data);
-    },
-
-    async saveMessage(data) {
-        return chatRepository.saveMessage(data);
-    },
-
-    async getMessages(roomId) {
-        return chatRepository.getMessages(roomId);
-    },
+    createRoom,
+    saveMessage,
+    getMessages,
 };

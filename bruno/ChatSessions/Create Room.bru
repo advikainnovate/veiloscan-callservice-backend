@@ -1,11 +1,11 @@
 meta {
-  name: Initiate Call
+  name: Create Chat Room
   type: http
   seq: 1
 }
 
 post {
-  url: {{baseUrl}}/api/v1/calls/session
+  url: {{baseUrl}}/api/v1/chat-sessions/rooms
   body: json
   auth: none
 }
@@ -16,17 +16,14 @@ headers {
 
 body:json {
   {
-    "clientId": "{{clientId}}"
+    "roomName": "Support Room",
+    "organizationId": "{{orgId}}"
   }
 }
 
 docs {
-  # Initiate Call
+  # Create Chat Room
 
-  Creates a new call session.
+  Creates a new chat room.
   Requires x-api-key header to identify the organization.
-
-  ## Body
-
-  - `clientId` (required)
 }

@@ -1,9 +1,8 @@
 const callService = require('./call.session.service');
 
-exports.createSession = async (req, res, next) => {
+const createSession = async (req, res, next) => {
     try {
         const { clientId } = req.body;
-
         const session = await callService.createSession(clientId || 'unknown');
 
         return res.status(201).json({
@@ -15,7 +14,7 @@ exports.createSession = async (req, res, next) => {
     }
 };
 
-exports.getSession = async (req, res, next) => {
+const getSession = async (req, res, next) => {
     try {
         const session = await callService.getSession(req.params.sessionId);
 
@@ -28,7 +27,7 @@ exports.getSession = async (req, res, next) => {
     }
 };
 
-exports.endSession = async (req, res, next) => {
+const endSession = async (req, res, next) => {
     try {
         const session = await callService.endSession(req.params.sessionId);
 
@@ -41,7 +40,7 @@ exports.endSession = async (req, res, next) => {
     }
 };
 
-exports.acceptSession = async (req, res, next) => {
+const acceptSession = async (req, res, next) => {
     try {
         const session = await callService.acceptSession(req.params.sessionId);
 
@@ -54,7 +53,7 @@ exports.acceptSession = async (req, res, next) => {
     }
 };
 
-exports.rejectSession = async (req, res, next) => {
+const rejectSession = async (req, res, next) => {
     try {
         const session = await callService.rejectSession(req.params.sessionId);
 
@@ -65,4 +64,12 @@ exports.rejectSession = async (req, res, next) => {
     } catch (err) {
         next(err);
     }
+};
+
+module.exports = {
+    createSession,
+    getSession,
+    endSession,
+    acceptSession,
+    rejectSession,
 };

@@ -1,0 +1,26 @@
+meta {
+  name: Get Room Messages
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/chat-sessions/rooms/{{roomId}}/messages
+  body: none
+  auth: none
+}
+
+headers {
+  x-api-key: {{apiKey}}
+}
+
+vars:pre-request {
+  roomId: 
+}
+
+docs {
+  # Get Room Messages
+
+  Returns all messages for a chat room in ascending order.
+  Requires x-api-key header to identify the organization.
+}

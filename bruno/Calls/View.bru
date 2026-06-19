@@ -1,25 +1,26 @@
 meta {
-  name: View Call Session
+  name: Get Call Session
   type: http
-  seq: 5
+  seq: 2
 }
 
 get {
-  url: {{baseUrl}}/api/v1/calls/{{callId}}/view
+  url: {{baseUrl}}/api/v1/calls/session/{{sessionId}}
   body: none
-  auth: bearer
+  auth: none
 }
 
-auth:bearer {
-  token: {{accessToken}}
+headers {
+  x-api-key: {{apiKey}}
 }
 
 vars:pre-request {
-  callId: e308627f-1191-4686-a309-5e631ed26012
+  sessionId: e308627f-1191-4686-a309-5e631ed26012
 }
 
 docs {
-  # View Call Session
-  
+  # Get Call Session
+
   Retrieves details for a specific call session.
+  Requires x-api-key header to identify the organization.
 }

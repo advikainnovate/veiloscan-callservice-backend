@@ -1,25 +1,26 @@
 meta {
   name: Reject Call
   type: http
-  seq: 11
+  seq: 4
 }
 
 patch {
-  url: {{baseUrl}}/api/v1/calls/session/{{callId}}/reject
+  url: {{baseUrl}}/api/v1/calls/session/{{sessionId}}/reject
   body: none
-  auth: bearer
+  auth: none
 }
 
-auth:bearer {
-  token: {{accessToken}}
+headers {
+  x-api-key: {{apiKey}}
 }
 
 vars:pre-request {
-  callId: e308627f-1191-4686-a309-5e631ed26012
+  sessionId: e308627f-1191-4686-a309-5e631ed26012
 }
 
 docs {
   # Reject Call
-  
-  Rejects an incoming call request.
+
+  Rejects an incoming call session.
+  Requires x-api-key header to identify the organization.
 }

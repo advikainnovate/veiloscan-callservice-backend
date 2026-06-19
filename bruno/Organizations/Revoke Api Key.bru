@@ -5,14 +5,21 @@ meta {
 }
 
 patch {
-  url: {{baseUrl}}/api/v1/organizations/api-keys/:apiKeyId/revoke
-  auth: bearer
+  url: {{baseUrl}}/api/v1/organizations/me/api-keys/{{apiKeyId}}/revoke
+  auth: none
 }
 
-auth:bearer {
-  token: {{accessToken}}
+headers {
+  x-api-key: {{apiKey}}
+}
+
+vars:pre-request {
+  apiKeyId: 
 }
 
 docs {
   # Revoke API Key
+
+  Revokes an API key belonging to the authenticated organization.
+  The key must belong to the org identified by x-api-key — prevents revoking other orgs' keys.
 }

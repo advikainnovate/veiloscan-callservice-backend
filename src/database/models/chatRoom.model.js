@@ -1,30 +1,29 @@
-const { DataTypes } = require('sequelize');
+const { Model } = require('sequelize');
 
-module.exports = (sequelize) => {
-    const ChatRoom = sequelize.define(
-        'ChatRoom',
+module.exports = (sequelize, DataTypes) => {
+    class ChatRoomModel extends Model {
+        static associate(models) {
+            ChatRoomModel.hasMany(models.ChatMessage, {
+                foreignKey: 'roomId',
+                as: 'messages',
+            });
+        }
+    }
+
+    ChatRoomModel.init(
         {
-            id: {
-                type: DataTypes.UUID,
-                defaultValue: DataTypes.UUIDV4,
-                primaryKey: true,
-            },
-
-            roomName: {
-                type: DataTypes.STRING,
-                allowNull: true,
-            },
-
-            organizationId: {
-                type: DataTypes.STRING,
-                allowNull: true,
-            },
+            id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, allowNull: false, primaryKey: true },
+            roomName: { type: DataTypes.STRING, allowNull: true },
+            organizationId: { type: DataTypes.STRING, allowNull: true },
         },
         {
+            sequelize,
+            modelName: 'ChatRoom',
             tableName: 'chat_rooms',
+            paranoid: false,
             timestamps: true,
         }
     );
 
-    return ChatRoom;
+    return ChatRoomModel;
 };
