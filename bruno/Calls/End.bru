@@ -1,5 +1,5 @@
 meta {
-  name: End Call
+  name: End Call (HTTP)
   type: http
   seq: 5
 }
@@ -14,13 +14,12 @@ headers {
   x-api-key: {{apiKey}}
 }
 
-vars:pre-request {
-  sessionId: e308627f-1191-4686-a309-5e631ed26012
-}
-
 docs {
-  # End Call
+  # End Call (HTTP)
 
-  Ends an active call session.
-  Requires x-api-key header to identify the organization.
+  Marks the session as `ended` and records duration.
+  This is the HTTP counterpart — for real-time call ending use the socket SDK:
+  `sdk.endCall()`
+
+  The socket `end-call` event handles notifying all participants in real time.
 }

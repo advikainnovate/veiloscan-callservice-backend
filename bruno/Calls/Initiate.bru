@@ -1,5 +1,5 @@
 meta {
-  name: Initiate Call
+  name: Initiate Call Session
   type: http
   seq: 1
 }
@@ -16,17 +16,27 @@ headers {
 
 body:json {
   {
-    "clientId": "{{clientId}}"
+    "clientId": "{{clientId}}",
+    "callerUserId": "{{callerUserId}}",
+    "calleeUserId": "{{calleeUserId}}",
+    "hasVideo": false
   }
 }
 
 docs {
-  # Initiate Call
+  # Initiate Call Session
 
-  Creates a new call session.
-  Requires x-api-key header to identify the organization.
+  Creates a new call session record. Returns a sessionId to use in socket events.
+  Requires x-api-key header.
 
   ## Body
+  - `clientId` (required) — your app client identifier
+  - `callerUserId` (optional) — user ID of the caller
+  - `calleeUserId` (optional) — user ID of the callee
+  - `hasVideo` (optional) — true for video call, false for audio only
 
-  - `clientId` (required)
+  ## After this call
+  Use the returned `sessionId` with the socket SDK:
+  - Caller: `sdk.initiateCall(sessionId, calleeUserId)`
+  - Callee: listen for `incoming-call` event, then `sdk.acceptCall(sessionId)` or `sdk.rejectCall(sessionId)`
 }

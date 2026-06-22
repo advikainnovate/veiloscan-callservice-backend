@@ -1,5 +1,5 @@
 meta {
-  name: Reject Call
+  name: Reject Call (HTTP)
   type: http
   seq: 4
 }
@@ -14,13 +14,10 @@ headers {
   x-api-key: {{apiKey}}
 }
 
-vars:pre-request {
-  sessionId: e308627f-1191-4686-a309-5e631ed26012
-}
-
 docs {
-  # Reject Call
+  # Reject Call (HTTP)
 
-  Rejects an incoming call session.
-  Requires x-api-key header to identify the organization.
+  Updates the session status to `ended` in the database.
+  This is the HTTP counterpart — for real-time rejection use the socket SDK:
+  `sdk.rejectCall(sessionId)`
 }

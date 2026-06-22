@@ -14,13 +14,11 @@ headers {
   x-api-key: {{apiKey}}
 }
 
-vars:pre-request {
-  sessionId: e308627f-1191-4686-a309-5e631ed26012
-}
-
 docs {
   # Get Call Session
 
-  Retrieves details for a specific call session.
-  Requires x-api-key header to identify the organization.
+  Returns details for a call session including status, duration, callerUserId, calleeUserId.
+
+  ## Status values
+  idle → ringing → connecting → connected → ended / failed
 }

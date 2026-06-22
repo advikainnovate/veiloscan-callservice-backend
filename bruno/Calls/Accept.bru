@@ -1,5 +1,5 @@
 meta {
-  name: Accept Call
+  name: Accept Call (HTTP)
   type: http
   seq: 3
 }
@@ -14,13 +14,10 @@ headers {
   x-api-key: {{apiKey}}
 }
 
-vars:pre-request {
-  sessionId: 5e7276dc-e661-496c-8ea5-2bea2c26c84e
-}
-
 docs {
-  # Accept Call
+  # Accept Call (HTTP)
 
-  Accepts an incoming call session.
-  Requires x-api-key header to identify the organization.
+  Updates the session status to `connecting` in the database.
+  This is the HTTP counterpart — for real-time ringing use the socket SDK:
+  `sdk.acceptCall(sessionId)`
 }

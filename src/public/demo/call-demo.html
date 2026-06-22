@@ -8,73 +8,108 @@
             * { box-sizing: border-box; }
             body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-                margin: 0;
-                padding: 28px 20px;
-                background: #f0f4f8;
-                color: #1a202c;
+                margin: 0; padding: 24px 16px;
+                background: #f0f4f8; color: #1a202c;
             }
-            .page { max-width: 560px; margin: 0 auto; }
-            h1 { font-size: 1.4rem; margin-bottom: 4px; }
-            .back { font-size: 13px; color: #3182ce; text-decoration: none; display: block; margin-bottom: 16px; }
+            .page { max-width: 620px; margin: 0 auto; }
+            h1 { font-size: 1.35rem; margin-bottom: 4px; }
+            .back { font-size: 13px; color: #3182ce; text-decoration: none; display: block; margin-bottom: 14px; }
             .card {
-                background: #fff;
-                border-radius: 12px;
-                border: 1px solid #e2e8f0;
-                padding: 24px;
-                margin-bottom: 16px;
+                background: #fff; border-radius: 12px;
+                border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 14px;
             }
-            label { display: block; font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 4px; margin-top: 14px; }
-            label:first-child { margin-top: 0; }
-            input {
-                width: 100%;
-                padding: 9px 12px;
-                border: 1px solid #cbd5e0;
-                border-radius: 7px;
-                font-size: 14px;
-                outline: none;
+            .card-title { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: #718096; text-transform: uppercase; margin-bottom: 14px; }
+            label { display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 3px; margin-top: 12px; }
+            label:first-of-type { margin-top: 0; }
+            input[type=text], input[type=password] {
+                width: 100%; padding: 8px 11px;
+                border: 1px solid #cbd5e0; border-radius: 7px;
+                font-size: 13px; outline: none;
             }
             input:focus { border-color: #3182ce; }
-            .btn-row { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
-            button {
-                padding: 9px 18px;
-                border: none;
-                border-radius: 7px;
-                font-size: 14px;
-                font-weight: 600;
-                cursor: pointer;
-            }
-            #connectBtn { background: #3182ce; color: #fff; }
-            #endCallBtn { background: #e53e3e; color: #fff; }
-            #connectBtn:disabled, #endCallBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+            .row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
+
+            /* Buttons */
+            button { padding: 8px 16px; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+            button:disabled { opacity: 0.38; cursor: not-allowed; }
+            .btn-blue  { background: #3182ce; color: #fff; }
+            .btn-red   { background: #e53e3e; color: #fff; }
+            .btn-grey  { background: #edf2f7; color: #2d3748; }
+            .btn-green { background: #38a169; color: #fff; }
+            .btn-sm    { padding: 6px 12px; font-size: 12px; }
+
+            /* Status bar */
             .status-bar {
-                margin-top: 16px;
-                padding: 10px 14px;
-                border-radius: 7px;
-                font-size: 13px;
-                font-weight: 600;
-                background: #edf2f7;
-                color: #4a5568;
+                margin-top: 12px; padding: 9px 13px;
+                border-radius: 7px; font-size: 12px; font-weight: 700;
+                background: #edf2f7; color: #4a5568;
+                display: flex; align-items: center; gap: 8px;
             }
+            .status-bar.idle     { background: #edf2f7; color: #4a5568; }
+            .status-bar.ringing  { background: #fefcbf; color: #744210; }
+            .status-bar.connecting { background: #bee3f8; color: #2a69ac; }
             .status-bar.connected { background: #c6f6d5; color: #276749; }
-            .status-bar.active { background: #bee3f8; color: #2a69ac; }
-            .status-bar.ended { background: #fed7d7; color: #9b2c2c; }
-            .status-bar.error { background: #fed7d7; color: #9b2c2c; }
-            audio { display: block; width: 100%; margin-top: 6px; border-radius: 6px; }
-            .log-box {
-                background: #1a202c;
-                color: #a0aec0;
-                font-family: monospace;
-                font-size: 12px;
-                padding: 12px;
-                border-radius: 8px;
-                height: 150px;
-                overflow-y: auto;
+            .status-bar.ended    { background: #fed7d7; color: #9b2c2c; }
+            .status-bar.failed   { background: #fed7d7; color: #9b2c2c; }
+            .status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+            /* Incoming call overlay */
+            #incomingOverlay {
+                display: none; position: fixed; inset: 0;
+                background: rgba(0,0,0,.55); z-index: 100;
+                align-items: center; justify-content: center;
             }
-            .log-box .entry { margin-bottom: 4px; }
-            .log-box .entry.info { color: #90cdf4; }
-            .log-box .entry.ok { color: #9ae6b4; }
-            .log-box .entry.warn { color: #fbd38d; }
-            .log-box .entry.err { color: #fc8181; }
+            #incomingOverlay.show { display: flex; }
+            .incoming-card {
+                background: #fff; border-radius: 16px; padding: 32px 28px;
+                text-align: center; max-width: 320px; width: 90%;
+                box-shadow: 0 20px 60px rgba(0,0,0,.25);
+            }
+            .incoming-card h2 { margin: 0 0 6px; font-size: 1.2rem; }
+            .incoming-card p  { color: #4a5568; font-size: 13px; margin-bottom: 20px; }
+            .incoming-btns { display: flex; gap: 10px; justify-content: center; }
+            .incoming-btns button { flex: 1; padding: 10px; font-size: 14px; border-radius: 9px; }
+
+            /* Controls */
+            .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+            .ctrl-btn {
+                padding: 7px 14px; border: 1.5px solid #e2e8f0;
+                border-radius: 8px; font-size: 12px; font-weight: 600;
+                background: #fff; color: #2d3748; cursor: pointer;
+                transition: background .15s, border-color .15s;
+            }
+            .ctrl-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+            .ctrl-btn.active { background: #ebf8ff; border-color: #90cdf4; color: #2b6cb0; }
+            .ctrl-btn.muted  { background: #fff5f5; border-color: #fc8181; color: #c53030; }
+
+            /* Quality badge */
+            #qualityBadge {
+                display: none; font-size: 11px; font-weight: 700;
+                padding: 3px 9px; border-radius: 99px;
+                background: #c6f6d5; color: #276749;
+            }
+            #qualityBadge.weak { background: #fefcbf; color: #744210; }
+            #qualityBadge.poor { background: #fed7d7; color: #9b2c2c; }
+
+            /* Duration */
+            #durationEl { font-size: 12px; color: #718096; min-width: 48px; }
+
+            /* Media */
+            audio, video { display: block; width: 100%; border-radius: 8px; margin-top: 6px; background: #1a202c; }
+            video { max-height: 200px; object-fit: cover; }
+
+            /* Log */
+            .log-box {
+                background: #1a202c; color: #a0aec0;
+                font-family: monospace; font-size: 11.5px;
+                padding: 11px; border-radius: 8px;
+                height: 160px; overflow-y: auto;
+            }
+            .log-box .e { margin-bottom: 3px; line-height: 1.4; }
+            .log-box .e.ok   { color: #9ae6b4; }
+            .log-box .e.warn { color: #fbd38d; }
+            .log-box .e.err  { color: #fc8181; }
+            .log-box .e.info { color: #90cdf4; }
         </style>
     </head>
     <body>
@@ -82,45 +117,86 @@
             <a class="back" href="/public/demos.html">← Back to demos</a>
             <h1>Call Demo</h1>
 
+            <!-- Setup card -->
             <div class="card">
+                <div class="card-title">Setup</div>
                 <label>API Key</label>
                 <input id="apiKey" type="password" placeholder="cp_live_..." />
 
+                <label>Your User ID</label>
+                <input id="userId" type="text" placeholder="e.g. user-alice (auto-generated if empty)" />
+
                 <label>Session ID</label>
-                <input id="sessionId" placeholder="e.g. demo-session-1" />
+                <input id="sessionId" type="text" placeholder="e.g. demo-session-1 (same in both tabs)" />
 
-                <label>Your User ID <span style="font-weight:400;color:#718096">(optional)</span></label>
-                <input id="userId" placeholder="auto-generated if empty" />
+                <label>Enable Video <span style="font-weight:400;color:#718096">(audio only if unchecked)</span></label>
+                <input id="enableVideo" type="checkbox" style="width:auto;margin-top:4px" />
 
-                <div class="btn-row">
-                    <button id="connectBtn">Connect &amp; Join</button>
-                    <button id="endCallBtn" disabled>End Call</button>
+                <div class="row">
+                    <button id="connectBtn" class="btn-blue">Connect &amp; Join</button>
+                    <button id="endCallBtn" class="btn-red" disabled>End Call</button>
                 </div>
 
-                <div class="status-bar" id="statusBar">Status: idle</div>
+                <div class="status-bar idle" id="statusBar">
+                    <span class="status-dot"></span>
+                    <span id="statusText">idle</span>
+                    <span id="durationEl"></span>
+                    <span id="qualityBadge"></span>
+                </div>
             </div>
 
+            <!-- Controls card (hidden until joined) -->
+            <div class="card" id="controlsCard" style="display:none">
+                <div class="card-title">Controls</div>
+                <div class="controls">
+                    <button class="ctrl-btn" id="muteBtn" disabled>🎤 Mute</button>
+                    <button class="ctrl-btn" id="videoBtn" disabled>📷 Camera Off</button>
+                </div>
+            </div>
+
+            <!-- Media card -->
             <div class="card">
-                <label>Local Audio</label>
+                <div class="card-title">Media</div>
+                <label>Local</label>
                 <audio id="localAudio" muted controls></audio>
-                <label style="margin-top:14px">Remote Audio</label>
+                <video id="localVideo" muted autoplay playsinline style="display:none"></video>
+                <label style="margin-top:12px">Remote</label>
                 <audio id="remoteAudio" autoplay controls></audio>
+                <video id="remoteVideo" autoplay playsinline style="display:none"></video>
             </div>
 
+            <!-- Log card -->
             <div class="card">
-                <label>Event Log</label>
+                <div class="card-title">Event Log</div>
                 <div class="log-box" id="logBox"></div>
             </div>
 
-            <div class="card" style="color:#4a5568;font-size:13px;line-height:1.7">
-                <strong>How to demo:</strong>
-                <ol style="margin:8px 0 0;padding-left:18px">
-                    <li>Open this page in <strong>two browser tabs</strong></li>
-                    <li>Paste the same <strong>API Key</strong> and <strong>Session ID</strong> in both</li>
-                    <li>Click <strong>Connect &amp; Join</strong> in both tabs</li>
-                    <li>The call starts automatically when both peers are present</li>
-                    <li>Click <strong>End Call</strong> to hang up</li>
+            <!-- How to -->
+            <div class="card" style="font-size:13px;color:#4a5568;line-height:1.7">
+                <strong>Direct join (two tabs, same session ID):</strong>
+                <ol style="margin:6px 0 14px;padding-left:18px">
+                    <li>Open in two tabs, paste same API Key + Session ID</li>
+                    <li>Click <strong>Connect &amp; Join</strong> in both — call starts automatically</li>
                 </ol>
+                <strong>Ringing flow (caller/callee):</strong>
+                <ol style="margin:6px 0 0;padding-left:18px">
+                    <li>Tab 1 = Caller, Tab 2 = Callee — use <strong>different User IDs</strong></li>
+                    <li>Both click Connect (no session ID needed for callee)</li>
+                    <li>Caller enters callee's User ID in Session ID field and clicks <strong>Ring Callee</strong></li>
+                    <li>Tab 2 gets an incoming call popup — Accept or Reject</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Incoming call overlay -->
+        <div id="incomingOverlay">
+            <div class="incoming-card">
+                <h2>📞 Incoming Call</h2>
+                <p id="incomingFrom">from unknown</p>
+                <div class="incoming-btns">
+                    <button id="acceptBtn" class="btn-green">Accept</button>
+                    <button id="rejectBtn" class="btn-red">Reject</button>
+                </div>
             </div>
         </div>
 

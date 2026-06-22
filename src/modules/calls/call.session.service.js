@@ -1,32 +1,39 @@
 const crypto = require('crypto');
-
 const callRepository = require('../../repository/call.repository');
 
-const createSession = async (clientId) => {
+const createSession = async (clientId, { callerUserId, calleeUserId, hasVideo = false } = {}) => {
     return callRepository.create({
         sessionId: crypto.randomUUID(),
         clientId,
-        status: 'created',
+        callerUserId: callerUserId || null,
+        calleeUserId: calleeUserId || null,
+        hasVideo,
+        status: 'idle',
     });
+};
+
+const getSession = async (sessionId) => {
+    return callRepository.findBySessionId(sessionId);
+};
+
+const ringSession = async (sessionId) => {
+    return callRepository.update(sessionId, { status: 'ringing' });
 };
 
 const activateSession = async (sessionId) => {
     return callRepository.update(sessionId, {
-        status: 'active',
+        status: 'connected',
         startedAt: new Date(),
     });
 };
 
 const acceptSession = async (sessionId) => {
-    return activateSession(sessionId);
+    return callRepository.update(sessionId, { status: 'connecting' });
 };
 
 const rejectSession = async (sessionId) => {
     const session = await callRepository.findBySessionId(sessionId);
-
-    if (!session) {
-        throw new Error('Session not found');
-    }
+    if (!session) return null;
 
     return callRepository.update(sessionId, {
         status: 'ended',
@@ -37,11 +44,7 @@ const rejectSession = async (sessionId) => {
 
 const endSession = async (sessionId) => {
     const session = await callRepository.findBySessionId(sessionId);
-
-    if (!session) {
-        // Session was never persisted (e.g. socket-only demo) — nothing to update
-        return null;
-    }
+    if (!session) return null; // socket-only session — nothing to update
 
     const endedAt = new Date();
     const durationSeconds = session.startedAt
@@ -55,24 +58,33 @@ const endSession = async (sessionId) => {
     });
 };
 
-const pauseSession = async (sessionId) => {
+const failSession = async (sessionId) => {
+    const session = await callRepository.findBySessionId(sessionId);
+    if (!session) return null;
+
     return callRepository.update(sessionId, {
-        status: 'paused',
+        status: 'failed',
+        endedAt: new Date(),
     });
 };
 
+const pauseSession = async (sessionId) => {
+    return callRepository.update(sessionId, { status: 'connecting' });
+};
+
 const resumeSession = async (sessionId) => {
-    return callRepository.update(sessionId, {
-        status: 'active',
-    });
+    return callRepository.update(sessionId, { status: 'connected' });
 };
 
 module.exports = {
     createSession,
+    getSession,
+    ringSession,
     activateSession,
     acceptSession,
     rejectSession,
     endSession,
+    failSession,
     pauseSession,
     resumeSession,
 };
