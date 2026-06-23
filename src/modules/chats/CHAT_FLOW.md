@@ -2,117 +2,266 @@
 
 ## Overview
 
-- Base route: `/api/v1/chat-sessions` (mounted in `src/app.js`).
-- Primary responsibilities: create chat rooms, fetch room history, persist messages, and publish real-time chat events via Socket.IO.
-- Core files:
-    - `src/modules/chats/chat.routes.js`
-    - `src/modules/chats/chat.controller.js`
-    - `src/modules/chats/chat.service.js`
-    - `src/modules/chats/chat.socket.js`
+- Base route: `/api/v1/chat-sessions` (auth: `x-api-key` header required on all routes)
+- Responsibilities: create rooms, persist messages, message delivery/read receipts, online presence, typing indicators, conversation state management, message history with pagination
+- HTTP layer handles room/message management; Socket.IO handles all real-time events
+
+---
 
 ## HTTP Endpoints
 
-- POST `/api/v1/chat-sessions/rooms` — create a new chat room.
-- GET `/api/v1/chat-sessions/rooms/:roomId/messages` — retrieve all messages for a room, sorted by `createdAt` ascending.
+| Method | Path | Controller | Description |
+|--------|------|------------|-------------|
+| POST | `/api/v1/chat-sessions/rooms` | `createRoom` | Create a new chat room |
+| GET | `/api/v1/chat-sessions/rooms/:roomId` | `getRoom` | Get room details and status |
+| PATCH | `/api/v1/chat-sessions/rooms/:roomId/status` | `updateRoomStatus` | Transition conversation state |
+| GET | `/api/v1/chat-sessions/rooms/:roomId/messages` | `getMessages` | Paginated message history |
+| PATCH | `/api/v1/chat-sessions/messages/:messageId/delivered` | `markDelivered` | Mark message as delivered |
+| PATCH | `/api/v1/chat-sessions/messages/:messageId/read` | `markRead` | Mark message as read |
 
-> Implementation notes: routes are defined in `src/modules/chats/chat.routes.js` and mounted under `/chat-sessions` in `src/routes/index.js`, then prefixed with `/api/v1/` in `src/app.js`.
-> Socket.IO chat signaling is initialized in `server.js` and handled by `src/modules/chats/chat.socket.js`.
-> Shared socket helpers in `src/helpers/sockets/roomManager.js` and `src/helpers/sockets/connectionManager.js` are used by both chat and call socket handlers.
+> Routes: `src/modules/chats/chat.routes.js`
+> Controller: `src/modules/chats/chat.controller.js`
+> Service: `src/modules/chats/chat.service.js`
+> Repository: `src/repository/chat.repository.js`
+> Socket: `src/modules/chats/chat.socket.js`
 
-## Persistence
+---
 
-- `ChatRoom` is defined in `src/database/models/chatRoom.model.js`.
-- `ChatMessage` is defined in `src/database/models/chat.Message.model.js`.
-- `roomId` is stored as `STRING`, allowing arbitrary room identifiers from the demo or clients.
-- `senderId` and `message` are required; `receiverId` is nullable.
+## State Definitions
 
-## Real-time Socket Events
+### Message Status
 
-`src/modules/chats/chat.socket.js` handles the socket lifecycle. Supported events:
-
-- Client -> Server:
-    - `join-room` { roomId, userId? }
-    - `send-message` { roomId, userId, text, receiverId?, messageType? }
-    - `typing` { roomId, userId }
-    - `stop-typing` { roomId, userId }
-    - `leave-room` { roomId }
-
-- Server -> Client:
-    - `participant-joined` { socketId }
-    - `participant-left` { socketId }
-    - `message-received` { id, roomId, senderId, receiverId, message, messageType, createdAt, updatedAt }
-    - `user-typing` { userId }
-    - `user-stop-typing` { userId }
-    - `message-error` { roomId, error }
-
-> Note: `send-message` is persisted via `chatService.saveMessage(payload)` before broadcasting the saved message to the room.
-
-## Sequence Diagram
-
-```mermaid
-sequenceDiagram
-    participant ClientA as Client A
-    participant ClientB as Client B
-    participant Socket as Chat Socket
-    participant Repo as Chat Repository
-
-    ClientA->>Socket: join-room({ roomId })
-    Socket->>Socket: socket.join(roomId)
-    Socket-->>ClientA: participant-joined({ socketId })
-
-    ClientB->>Socket: join-room({ roomId })
-    Socket->>Socket: socket.join(roomId)
-    Socket-->>ClientA: participant-joined({ socketId })
-    Socket-->>ClientB: participant-joined({ socketId })
-
-    ClientA->>Socket: send-message({ roomId, userId, text })
-    Socket->>Repo: saveMessage(payload)
-    Repo-->>Socket: saved message
-    Socket-->>ClientA: message-received(message)
-    Socket-->>ClientB: message-received(message)
-
-    ClientB->>Socket: typing({ roomId, userId })
-    Socket-->>ClientA: user-typing({ userId })
-
-    ClientB->>Socket: stop-typing({ roomId, userId })
-    Socket-->>ClientA: user-stop-typing({ userId })
-
-    ClientA->>Socket: leave-room({ roomId })
-    Socket-->>ClientA: participant-left({ socketId })
-    Socket-->>ClientB: participant-left({ socketId })
+```
+sending → sent → delivered → read
+                           ↘ failed
 ```
 
-## Step-by-step Chat Flow
+| Status | Description |
+|--------|-------------|
+| `sending` | Client optimistic state before server ACK |
+| `sent` | Persisted to DB, broadcast to room |
+| `delivered` | Receiver's socket received the message |
+| `read` | Receiver opened the conversation |
+| `failed` | Persistence or delivery error |
 
-1. Client opens a Socket.IO connection.
-2. Client emits `join-room` with `{ roomId, userId? }`.
-    - Server uses `roomManager` to track room membership, optionally registers `userId` through `connectionManager`, adds the socket to the room, and broadcasts `participant-joined`.
-3. Client sends a message with `send-message`.
-    - Payload should include `{ roomId, userId, text }`.
-    - Backend saves the message and then broadcasts `message-received` to all room members.
-4. Clients receive `message-received` and render the chat message.
-5. Clients can emit `typing` and `stop-typing` to signal presence during composition.
-6. When a client leaves, `leave-room` is emitted.
-    - Server broadcasts `participant-left`.
-7. Message history is available via GET `/api/v1/chat-sessions/rooms/:roomId/messages`.
+### Conversation (Room) Status
 
-## Demo / Reference Client
+| Status | Description |
+|--------|-------------|
+| `active` | Normal open chat |
+| `archived` | Preserved but hidden from default view |
+| `closed` | Ended, no new messages |
 
-- `src/public/demo/chat-demo.html`
-- `src/public/demo/chat-demo.js`
+### User Presence
 
-The demo client:
+| Status | Description |
+|--------|-------------|
+| `online` | Connected and active |
+| `away` | Connected but idle for 5+ minutes |
+| `offline` | Disconnected |
 
-- accepts a manual room ID
-- connects to Socket.IO
-- joins a room with `join-room`
-- sends a message with `send-message`
-- listens for `participant-joined`, `message-received`, and `message-error`
+---
 
-## Notes & Recommendations
+## Socket Events
 
-- Room IDs are string-based and can be simple demo values like `room-123`.
-- Keep room IDs consistent across clients to ensure they join the same room.
-- `message-error` surfaces persistence failures so the frontend can show save errors.
-- `leave-room` and socket disconnect both remove the socket from the room helper state and broadcast `participant-left` with the updated participant count.
-- For production, add request validation middleware around socket payloads and HTTP body shape.
+### Client → Server
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `set-presence` | `{ userId, status }` | Set own presence (online/away/offline) |
+| `get-presence` | `{ userIds[] }` | Request presence for a list of users |
+| `join-room` | `{ roomId, userId }` | Join a chat room |
+| `leave-room` | `{ roomId }` | Leave a chat room |
+| `send-message` | `{ roomId, userId, message, receiverId?, messageType? }` | Send a message |
+| `message-delivered` | `{ messageId, roomId }` | Acknowledge receipt |
+| `message-read` | `{ messageId, roomId, userId }` | Mark a message as read |
+| `room-read` | `{ roomId, userId }` | Mark all unread messages in room as read |
+| `typing` | `{ roomId, userId }` | User started typing |
+| `stop-typing` | `{ roomId, userId }` | User stopped typing |
+
+### Server → Client
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `participant-joined` | `{ socketId, userId }` | Someone joined the room |
+| `participant-left` | `{ socketId, userId, participants }` | Someone left |
+| `message-received` | `{ id, roomId, senderId, receiverId, message, messageType, status, createdAt }` | New message broadcast |
+| `message-status` | `{ messageId, status, deliveredAt?, readAt?, readBy? }` | Status update for a message |
+| `room-read` | `{ roomId, userId }` | All messages marked read by userId |
+| `message-error` | `{ roomId, error, status: 'failed' }` | Message delivery/save failure |
+| `user-typing` | `{ userId }` | Peer started typing |
+| `user-stop-typing` | `{ userId }` | Peer stopped typing |
+| `presence-changed` | `{ userId, status, lastSeen }` | A user's presence changed |
+| `presence-list` | `[{ userId, status, lastSeen }]` | Response to `get-presence` |
+| `error` | `{ message }` | Generic error |
+
+---
+
+## Chat Flows
+
+### Flow A — Send & Receive Message
+
+```
+Client A (sender)           Server                    Client B (receiver)
+       |                       |                              |
+       |── send-message ──────▶|                              |
+       |   { roomId, message } |── saveMessage() ────────────|
+       |                       |                              |
+       |◀── message-received ──|── message-received ────────▶|
+       |    { status: sent }   |    { status: sent }          |
+       |                       |                              |
+       |                       |  [B is online in room]       |
+       |                       |── markDelivered(messageId)   |
+       |◀── message-status ──  |── message-status ───────────▶|
+       |    { status:          |    { status: delivered }      |
+       |      delivered }      |                              |
+       |                       |                              |
+       |                       |◀── message-read ─────────── |
+       |                       |   { messageId, userId: B }   |
+       |                       |── markRead(messageId)        |
+       |◀── message-status ──  |── message-status ───────────▶|
+       |    { status: read }   |    { status: read }           |
+```
+
+### Flow B — Presence & Typing
+
+```
+Client A                    Server                    Client B
+   |                           |                           |
+   |── set-presence(online) ──▶|── presence-changed ──────▶|
+   |                           |   { userId: A, online }   |
+   |                           |                           |
+   |── typing ────────────────▶|── user-typing ───────────▶|
+   |                           |                           |
+   |── stop-typing ────────────▶|── user-stop-typing ──────▶|
+   |                           |                           |
+   |  [idle for 5 minutes]     |                           |
+   |── set-presence(away) ────▶|── presence-changed ──────▶|
+   |                           |   { userId: A, away }     |
+   |                           |                           |
+   |── disconnect ─────────────|── presence-changed ──────▶|
+                               |   { userId: A, offline,   |
+                               |     lastSeen: <timestamp> }|
+```
+
+### Flow C — Message History & Sync on Reconnect
+
+```
+Client A                       Server
+   |                               |
+   |── connect ────────────────────|
+   |── join-room ─────────────────▶|
+   |                               |
+   |  [load existing history]      |
+   |── GET /rooms/:roomId/messages?limit=50
+   |◀─ [ ...messages ] ────────────|
+   |                               |
+   |  [load more — infinite scroll]|
+   |── GET /rooms/:roomId/messages?limit=50&before=<oldest_message_createdAt>
+   |◀─ [ ...older messages ] ──────|
+   |                               |
+   |── room-read ─────────────────▶|  [mark all as read on open]
+   |◀─ room-read ──────────────────|  [broadcast to room]
+```
+
+### Flow D — Read Receipts (Bulk)
+
+```
+Client B opens the conversation:
+   B ── room-read { roomId, userId: B } ──▶ Server
+   Server ── markRoomMessagesRead(roomId, B) ──▶ DB
+   Server ── room-read ──▶ Client A  [A sees ✓✓ read on all messages]
+```
+
+---
+
+## Presence Auto-Transitions
+
+```
+join-room / any activity  →  online  (resets 5-min idle timer)
+idle for 5 minutes        →  away    (server-side timer per userId)
+disconnect                →  offline (lastSeen recorded)
+reconnect                 →  online  (on set-presence or join-room)
+```
+
+---
+
+## SDK Reference
+
+```javascript
+import ChatManager, { PRESENCE } from '/sdk/chats-sdk/chatManager.js';
+
+const chat = new ChatManager({
+    apiKey:    'cp_live_...',
+    userId:    'user-alice',
+    socketUrl: 'https://your-platform.com',
+});
+
+await chat.connect();   // authenticates socket, announces online presence
+
+// ── Rooms ──────────────────────────────────────────────────────────────────
+chat.joinRoom('room-uuid');
+chat.leaveRoom('room-uuid');
+
+// ── Sending ────────────────────────────────────────────────────────────────
+chat.sendMessage({ roomId: 'room-uuid', receiverId: 'user-bob', message: 'Hello!' });
+
+// ── Receipts ───────────────────────────────────────────────────────────────
+chat.markRead('message-uuid', 'room-uuid');   // single message
+chat.markRoomRead('room-uuid');               // all unread in room
+
+// ── Typing ────────────────────────────────────────────────────────────────
+chat.startTyping('room-uuid');
+chat.stopTyping('room-uuid');
+
+// ── Presence ──────────────────────────────────────────────────────────────
+chat.setPresence(PRESENCE.AWAY);             // manual override
+chat.getPresence(['user-bob', 'user-carol']); // query presence of others
+
+// ── Events ────────────────────────────────────────────────────────────────
+chat.on('message',          (msg) => { /* render message */ });
+chat.on('message-status',   ({ messageId, status }) => { /* update tick */ });
+chat.on('room-read',        ({ roomId, userId }) => { /* all read */ });
+chat.on('typing-start',     ({ userId }) => { /* show typing indicator */ });
+chat.on('typing-stop',      ({ userId }) => { /* hide typing indicator */ });
+chat.on('user-online',      ({ userId }) => { /* show green dot */ });
+chat.on('user-offline',     ({ userId, lastSeen }) => { /* show last seen */ });
+chat.on('user-away',        ({ userId }) => { /* show away indicator */ });
+chat.on('presence-changed', ({ userId, status, lastSeen }) => { /* general */ });
+chat.on('presence-list',    (list) => { /* batch presence update */ });
+chat.on('participant-joined', ({ userId }) => { /* user entered room */ });
+chat.on('participant-left',   ({ userId }) => { /* user left room */ });
+chat.on('message-error',    ({ roomId, error }) => { /* show failed */ });
+chat.on('disconnected',     () => { /* reconnect UI */ });
+
+// ── Disconnect ────────────────────────────────────────────────────────────
+chat.disconnect();   // announces offline, disconnects socket
+```
+
+---
+
+## File Map
+
+```
+src/modules/chats/
+├── chat.controller.js    — HTTP request handlers
+├── chat.routes.js        — Express routes
+├── chat.service.js       — Business logic
+├── chat.socket.js        — All Socket.IO event handling, presence management
+└── CHAT_FLOW.md          — This document
+
+src/repository/
+└── chat.repository.js    — DB queries (ChatRoom, ChatMessage models)
+
+src/database/models/
+├── chatRoom.model.js     — Room model (status: active/archived/closed)
+└── chat.Message.model.js — Message model (status: sent/delivered/read/failed)
+
+sdk/chats-sdk/
+├── chatManager.js        — Full SDK: connect, send, receipts, presence, events
+└── messageManager.js     — (legacy, superseded by chatManager.js)
+```
+
+---
+
+_Last updated: 2026-06-23_

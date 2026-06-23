@@ -18,6 +18,10 @@ module.exports = (sequelize, DataTypes) => {
             receiverId: { type: DataTypes.STRING, allowNull: true },
             message: { type: DataTypes.TEXT, allowNull: false },
             messageType: { type: DataTypes.ENUM('text', 'image', 'file'), defaultValue: 'text' },
+            status: {
+                type: DataTypes.ENUM('sending', 'sent', 'delivered', 'read', 'failed'),
+                defaultValue: 'sent',
+            },
             deliveredAt: { type: DataTypes.DATE, allowNull: true },
             readAt: { type: DataTypes.DATE, allowNull: true },
         },

@@ -1,0 +1,23 @@
+meta {
+  name: Mark Message Delivered
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/chat-sessions/messages/{{messageId}}/delivered
+  body: none
+  auth: none
+}
+
+headers {
+  x-api-key: {{apiKey}}
+}
+
+docs {
+  # Mark Message Delivered
+
+  Marks a message as delivered and records deliveredAt.
+  The socket SDK handles this automatically via the `message-delivered` event.
+  Use this HTTP endpoint for backend-to-backend or batch delivery confirmation.
+}

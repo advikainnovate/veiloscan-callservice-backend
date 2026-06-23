@@ -15,6 +15,10 @@ module.exports = (sequelize, DataTypes) => {
             id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, allowNull: false, primaryKey: true },
             roomName: { type: DataTypes.STRING, allowNull: true },
             organizationId: { type: DataTypes.STRING, allowNull: true },
+            status: {
+                type: DataTypes.ENUM('active', 'archived', 'closed'),
+                defaultValue: 'active',
+            },
         },
         {
             sequelize,

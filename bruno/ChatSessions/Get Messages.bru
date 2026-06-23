@@ -1,7 +1,7 @@
 meta {
   name: Get Room Messages
   type: http
-  seq: 2
+  seq: 4
 }
 
 get {
@@ -14,13 +14,21 @@ headers {
   x-api-key: {{apiKey}}
 }
 
-vars:pre-request {
-  roomId: 
+params:query {
+  limit: 50
+  before: 
 }
 
 docs {
   # Get Room Messages
 
-  Returns all messages for a chat room in ascending order.
-  Requires x-api-key header to identify the organization.
+  Returns messages in ascending order (oldest first).
+  Supports pagination via query params.
+
+  ## Query params
+  - `limit`  — number of messages to return (default: 50)
+  - `before` — ISO timestamp — returns messages older than this (for infinite scroll / load more)
+
+  ## Message status values
+  sent → delivered → read → failed
 }

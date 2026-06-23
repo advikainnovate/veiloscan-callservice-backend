@@ -16,7 +16,7 @@ headers {
 
 body:json {
   {
-    "roomName": "Support Room",
+    "roomName": "Support Chat",
     "organizationId": "{{orgId}}"
   }
 }
@@ -24,6 +24,11 @@ body:json {
 docs {
   # Create Chat Room
 
-  Creates a new chat room.
-  Requires x-api-key header to identify the organization.
+  Creates a new chat room. Returns the room ID to use in socket events.
+  Requires x-api-key header.
+
+  ## After this call
+  Use the returned `id` as `roomId` in:
+  - SDK: `chat.joinRoom(roomId)`
+  - GET messages: `/chat-sessions/rooms/:roomId/messages`
 }

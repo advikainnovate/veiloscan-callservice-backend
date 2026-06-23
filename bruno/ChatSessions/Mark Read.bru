@@ -1,0 +1,23 @@
+meta {
+  name: Mark Message Read
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/chat-sessions/messages/{{messageId}}/read
+  body: none
+  auth: none
+}
+
+headers {
+  x-api-key: {{apiKey}}
+}
+
+docs {
+  # Mark Message Read
+
+  Marks a message as read and records readAt.
+  The socket SDK handles this automatically when the receiver views a message.
+  Use this HTTP endpoint for backend-to-backend or batch read confirmation.
+}

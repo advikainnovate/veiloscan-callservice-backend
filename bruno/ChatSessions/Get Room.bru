@@ -1,0 +1,21 @@
+meta {
+  name: Get Chat Room
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/chat-sessions/rooms/{{roomId}}
+  body: none
+  auth: none
+}
+
+headers {
+  x-api-key: {{apiKey}}
+}
+
+docs {
+  # Get Chat Room
+
+  Returns room details including status (active / archived / closed).
+}

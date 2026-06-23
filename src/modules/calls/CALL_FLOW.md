@@ -2,281 +2,321 @@
 
 ## Overview
 
-- Base route: `/api/v1/calls` (mounted in `src/app.js`).
-- Primary responsibilities: create call sessions, retrieve session info, end sessions, handle disconnections with reconnection grace period, and manage real-time signaling via sockets.
-
-## HTTP Endpoints
-
-- POST `/api/v1/calls/session` — `createSession` (`src/modules/calls/call.controller.js`) : Create a new call session. Returns a `sessionId`.
-- GET `/api/v1/calls/session/:sessionId` — `getSession` : Retrieve session details.
-- POST `/api/v1/calls/session/:sessionId/end` — `endSession` : End an existing session and compute duration.
-- PATCH `/api/v1/calls/session/:sessionId/accept` — `acceptSession` : Accept the incoming call and activate the session.
-- PATCH `/api/v1/calls/session/:sessionId/reject` — `rejectSession` : Reject the incoming call and end the session immediately.
-
-> Implementation notes: routes are defined in `src/modules/calls/call.routes.js` and mounted under `/calls` by `src/routes/index.js` then prefixed with `/api/v1/` in `src/app.js`.
-> Socket.IO signaling is initialized in `server.js` and handled by `src/modules/calls/signaling.socket.js`.
-> Shared socket helpers in `src/helpers/sockets/roomManager.js` and `src/helpers/sockets/connectionManager.js` provide room membership tracking and socket-user registration.
-
-## Session Status States
-
-Call sessions now have 4 statuses:
-
-- **created** — Session created, waiting for participants to join
-- **active** — Both participants connected, call in progress
-- **paused** — One participant disconnected but hasn't exceeded 30s timeout; waiting for reconnection
-- **ended** — Call terminated (either manually or after timeout)
-
-## Real-time Signaling (WebSocket events)
-
-The signaling implementation is in `src/modules/calls/signaling.socket.js` and is wired into the app from `server.js` using Socket.IO. It supports the following socket events:
-
-### Client → Server
-
-- `join-session` { sessionId, userId? } — client joins the session room and optionally registers a user ID for the connection.
-- `offer` { sessionId, ... } — send SDP offer to other participants.
-- `answer` { sessionId, ... } — send SDP answer back.
-- `ice-candidate` { sessionId, ... } — forward ICE candidates.
-- `leave-session` { sessionId } — leave the session room (triggers reconnection window).
-- `end-call` { sessionId } — explicit end call action (user pressed end button, no reconnection).
-- `pong` — response to server's ping (heartbeat).
-
-### Server → Client
-
-- `participant-joined` { socketId, participants } — broadcast when a participant joins.
-- `participant-left` { socketId, participants, canReconnect } — broadcast when a participant leaves (includes reconnection status).
-- `call-started` — emitted when two participants are connected and the session becomes active.
-- `call-paused` { reason, disconnectedSocketId, reconnectTimeoutSeconds } — session paused, waiting for reconnection within timeout.
-- `call-resumed` — disconnected participant rejoined, call resuming.
-- `call-ended` { reason } — call permanently ended (reasons: "user-ended", "all-participants-left", "reconnection-timeout").
-- `ping` — sent every 5 seconds to check participant liveness; clients respond with `pong`.
-- `offer` / `answer` / `ice-candidate` — forwarded to the other participants.
-
-## Advanced Features
-
-### Heartbeat / Liveness Detection
-
-- Server sends a `ping` event to all participants every 5 seconds
-- Clients respond with `pong`
-- Detects stale connections and ensures connection stability
-
-### Reconnection Window (30 seconds)
-
-- When a participant **accidentally disconnects** (network loss, client crash):
-    - Remaining participant(s) are notified via `participant-left` and `call-paused`
-    - Session status: "active" → "paused"
-    - 30-second timer starts
-- If the disconnected participant **rejoins within 30 seconds**:
-    - Emits `join-session` again with same sessionId
-    - Server auto-resumes the session: "paused" → "active"
-    - Emits `call-resumed` to both participants
-    - Call continues seamlessly
-- If **timer expires** without reconnection:
-    - Server auto-ends the session
-    - Emits `call-ended` with reason: "reconnection-timeout"
-    - Session status: "paused" → "ended"
-
-### Explicit End Call
-
-- When user clicks "End Call" button, client emits `end-call` event
-- **NO reconnection window** — call ends immediately
-- Server ends session and emits `call-ended` with reason: "user-ended"
-- All participants notified immediately
-
-## Sequence Diagram
-
-```mermaid
-sequenceDiagram
-    participant Client A
-    participant API as API Server (HTTP)
-    participant Signaling as Signaling (Socket.IO)
-    participant Client B
-    participant Repo as Call Repository
-
-    Client A->>API: POST /api/v1/calls/session { clientId }
-    API-->>Repo: create(sessionId, clientId, status:created)
-    Repo-->>API: session (sessionId)
-    API-->>Client A: 201 { sessionId }
-
-    Client A->>Signaling: connect & join-session(sessionId)
-    Signaling->>Signaling: socket.join(room)
-    Signaling-->>Client B: participant-joined(socketId)
-
-    Client B->>Signaling: connect & join-session(sessionId)
-    Signaling->>Repo: activateSession(sessionId) — status: active
-    Signaling-->>Client A: call-started
-    Signaling-->>Client B: call-started
-    Signaling->>Signaling: start heartbeat (ping every 5s)
-
-    Client A->>Signaling: offer(sessionId, sdp)
-    Signaling-->>Client B: offer(sdp)
-    Client B->>Signaling: answer(sessionId, sdp)
-    Signaling-->>Client A: answer(sdp)
-    Client A->>Signaling: ice-candidate
-    Signaling-->>Client B: ice-candidate
-
-    Signaling-->>Client A: ping
-    Client A-->>Signaling: pong
-    Signaling-->>Client B: ping
-    Client B-->>Signaling: pong
-
-    Note right of Signaling: Scenario A: User ends call
-
-    Client A->>Signaling: end-call(sessionId)
-    Signaling->>Repo: endSession(sessionId) — status: ended
-    Signaling-->>Client A: call-ended { reason: user-ended }
-    Signaling-->>Client B: call-ended { reason: user-ended }
-
-    Note right of Signaling: Scenario B: Accidental disconnect + rejoin
-
-    Client B->>Signaling: disconnect (network loss)
-    Signaling->>Repo: pauseSession(sessionId) — status: paused
-    Signaling-->>Client A: participant-left { canReconnect: true }
-    Signaling-->>Client A: call-paused { reconnectTimeoutSeconds: 30 }
-    Signaling->>Signaling: start 30s reconnection timer
-
-    Client B->>Signaling: reconnect & join-session(sessionId)
-    Signaling->>Repo: resumeSession(sessionId) — status: active
-    Signaling-->>Client A: call-resumed
-    Signaling-->>Client B: call-resumed
-
-    Note right of Signaling: Scenario C: Timeout (no reconnection)
-
-    Signaling->>Signaling: 30s timer expires, roomSize == 0
-    Signaling->>Repo: endSession(sessionId) — status: ended
-    Signaling-->>Client A: call-ended { reason: reconnection-timeout }
-```
-
-## Step-by-step Call Flow
-
-### Normal Call (Happy Path)
-
-1. **Initiate call** (Create session)
-
-- Client A → HTTP: POST `/api/v1/calls/session` with body `{ clientId }`.
-- Server: `createSession` creates a record with `sessionId` and `status: "created"`.
-- Response: `201 { success: true, data: { sessionId, ... } }`.
-
-2. **Participant A connects to signaling**
-
-- Client A → Socket: `join-session` with `{ sessionId, userId? }`.
-- Server: `signaling.socket.js` uses `roomManager` to track room members, joins socket to `sessionId` room.
-- Broadcasts: `participant-joined` to room (no one else yet).
-
-3. **Participant B connects to signaling**
-
-- Client B → Socket: `join-session` with `{ sessionId, userId? }`.
-- Server: Adds Client B to room, now room has 2 participants.
-- Server: Calls `activateSession(sessionId)` to set `status: "active"` and record `startedAt`.
-- Server: **Starts heartbeat** (ping every 5s).
-- Broadcasts: `call-started` to both participants.
-
-4. **Peer negotiation** (ICE exchange)
-
-- Client A → Server: `offer` (contains SDP, `sessionId`)
-- Server → Client B: forwards `offer`
-- Client B → Server: `answer`
-- Server → Client A: forwards `answer`
-- Both clients exchange `ice-candidate` events via server until connectivity established.
-
-5. **Call active**
-
-- Media flows peer-to-peer (UDP, not through signaling server)
-- Both clients respond to `ping` events with `pong` every 5 seconds
-
-6. **End call** — Two scenarios:
-
-    **Scenario A: User Explicitly Ends Call**
-
-- Client A → Socket: `end-call { sessionId }`
-- Server: Immediately calls `endSession(sessionId)` to set `status: "ended"` and record `endedAt`, `durationSeconds`.
-- Server: Broadcasts `call-ended { reason: "user-ended", endedBy: socketId }` to all.
-- Server: Cleans up all timers for this session.
-- Response: All participants notified, call fully ends, **no reconnection window**.
-
-**Scenario B: Accidental Disconnect (with Reconnection)**
-
-- Client B loses connection (network drop, client crash, etc.)
-- Socket.IO: `disconnect` event triggered
-- Server: Calls `leaveRoom(sessionId, socketId)` function
-- Server: Calls `pauseSession(sessionId)` to set `status: "paused"`.
-- Broadcasts: `participant-left { socketId, participants: 1, canReconnect: true }`
-- Broadcasts: `call-paused { reason: "participant-disconnected", disconnectedSocketId, reconnectTimeoutSeconds: 30 }`
-- Server: **Starts 30-second reconnection timer** for this session
-- Client A: Receives `call-paused` and `participant-left` events, UI shows "Waiting for reconnection..." state
-
-**If Client B Reconnects Within 30 Seconds:**
-
-- Client B → Socket: `join-session { sessionId, userId? }` (same sessionId)
-- Server: Detects active reconnection timer for this session
-- Server: Clears the reconnection timer
-- Server: Calls `resumeSession(sessionId)` to set `status: "active"`.
-- Broadcasts: `call-resumed` to both participants
-- Call continues seamlessly as if disconnect never happened
-
-**If 30 Seconds Expire Without Reconnection:**
-
-- Server: Reconnection timer callback fires
-- Server: Checks if room is still empty; if yes, calls `endSession(sessionId)` to set `status: "ended"`.
-- Broadcasts: `call-ended { reason: "reconnection-timeout" }`
-- Server: Cleans up all timers for this session
-- Client A: Receives `call-ended`, call is now fully over
-
-7. **Retrieve call details** (optional)
-
-- Client → HTTP: GET `/api/v1/calls/session/:sessionId` to fetch final session data including duration.
-
-## Client Implementation Reference
-
-### Connect to Call
-
-```javascript
-socket.emit('join-session', { sessionId: 'uuid-here', userId: 'optional-user-id' });
-socket.on('call-started', () => {
-    // Begin WebRTC peer negotiation (exchange offer/answer)
-});
-```
-
-### Handle Call Pause
-
-```javascript
-socket.on('call-paused', (data) => {
-    console.log(`Call paused. Reconnection timeout: ${data.reconnectTimeoutSeconds}s`);
-    // UI: Show "Waiting for participant to reconnect..." with countdown
-});
-
-socket.on('call-resumed', () => {
-    // UI: Resume normal call state
-});
-```
-
-### Respond to Heartbeat
-
-```javascript
-socket.on('ping', () => {
-    socket.emit('pong'); // Critical: keep connection alive
-});
-```
-
-### End Call
-
-```javascript
-// When user clicks "End Call" button
-socket.emit('end-call', { sessionId: 'uuid-here' });
-
-socket.on('call-ended', (data) => {
-    console.log('Call ended:', data.reason);
-    // reason: "user-ended" | "all-participants-left" | "reconnection-timeout"
-    // Clean up UI, release resources
-});
-```
-
-## Notes
-
-- Session status is tracked in `src/database/models/call.session.model.js` and can be queried for analytics/billing.
-- All timers (heartbeat, reconnection) are per-session in memory and use Maps for cleanup.
-- Reconnection window is configurable (currently 30,000ms / 30 seconds) in `signaling.socket.js`.
-- Bruno collection should include WebSocket examples or comments noting the socket events above.
+- Base route: `/api/v1/calls` (auth: `x-api-key` header required on all routes)
+- Responsibilities: create call sessions, ringing/accept/reject flow, WebRTC signaling, reconnection, mute/video controls, quality monitoring
+- HTTP layer handles session lifecycle; Socket.IO handles all real-time signaling
 
 ---
 
-Generated on: 2026-06-17
+## HTTP Endpoints
+
+| Method | Path | Controller | Description |
+|--------|------|------------|-------------|
+| POST | `/api/v1/calls/session` | `createSession` | Create a new call session record |
+| GET | `/api/v1/calls/session/:sessionId` | `getSession` | Get session details and current status |
+| PATCH | `/api/v1/calls/session/:sessionId/accept` | `acceptSession` | Mark session as `connecting` (HTTP counterpart to socket accept) |
+| PATCH | `/api/v1/calls/session/:sessionId/reject` | `rejectSession` | Mark session as `ended` (HTTP counterpart to socket reject) |
+| POST | `/api/v1/calls/session/:sessionId/end` | `endSession` | End session and record duration |
+
+> Routes: `src/modules/calls/call.routes.js`
+> Controller: `src/modules/calls/call.controller.js`
+> Service: `src/modules/calls/call.session.service.js`
+> Repository: `src/repository/call.repository.js`
+> Signaling: `src/modules/calls/signaling.socket.js`
+> Socket helpers: `src/helpers/sockets/roomManager.js`, `src/helpers/sockets/connectionManager.js`
+
+---
+
+## Session Status States
+
+```
+idle → ringing → connecting → connected → ended
+                                        ↘ failed
+```
+
+| Status | Description |
+|--------|-------------|
+| `idle` | Session created, no participants yet |
+| `ringing` | Caller initiated, callee is being alerted |
+| `connecting` | Callee accepted, both joining room / ICE negotiating |
+| `connected` | Both peers in room, media flowing |
+| `paused` | One peer disconnected, within reconnection window |
+| `ended` | Call terminated normally |
+| `failed` | ICE failure or unrecoverable error |
+
+---
+
+## Socket Events
+
+### Client → Server
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `initiate-call` | `{ sessionId, callerId, calleeId }` | Caller rings the callee |
+| `accept-call` | `{ sessionId, calleeId }` | Callee accepts the incoming call |
+| `reject-call` | `{ sessionId, calleeId }` | Callee rejects the incoming call |
+| `join-session` | `{ sessionId, userId? }` | Join the WebRTC room |
+| `offer` | `{ sessionId, offer, senderId }` | Send SDP offer |
+| `answer` | `{ sessionId, answer, senderId }` | Send SDP answer |
+| `ice-candidate` | `{ sessionId, candidate, senderId }` | Forward ICE candidate |
+| `mute-changed` | `{ sessionId, userId, muted }` | Broadcast mute state to peer |
+| `video-changed` | `{ sessionId, userId, videoEnabled }` | Broadcast video state to peer |
+| `leave-session` | `{ sessionId }` | Graceful leave (opens reconnection window) |
+| `end-call` | `{ sessionId }` | Explicit end — no reconnection |
+| `pong` | — | Heartbeat response |
+
+### Server → Client
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `incoming-call` | `{ sessionId, callerId, calleeId }` | Sent to callee when ringing starts |
+| `call-accepted` | `{ sessionId, calleeId }` | Sent to caller when callee accepts |
+| `call-rejected` | `{ sessionId, calleeId }` | Sent to caller when callee rejects |
+| `call-failed` | `{ reason, sessionId }` | Callee not connected / unreachable |
+| `call-timeout` | `{ sessionId, reason }` | No answer within 45s |
+| `participant-joined` | `{ socketId, participants }` | Someone joined the room |
+| `participant-left` | `{ socketId, participants, canReconnect }` | Someone left |
+| `call-started` | — | Both peers in room, WebRTC begins |
+| `call-paused` | `{ reason, disconnectedSocketId, reconnectTimeoutSeconds }` | Peer disconnected, waiting |
+| `call-resumed` | — | Peer rejoined within window |
+| `call-ended` | `{ reason, endedBy? }` | Call over (see reasons below) |
+| `mute-changed` | `{ sessionId, userId, muted }` | Relayed from peer |
+| `video-changed` | `{ sessionId, userId, videoEnabled }` | Relayed from peer |
+| `room-full` | `{ sessionId }` | Room already has 2 participants |
+| `ping` | — | Heartbeat (every 5s) |
+| `offer` / `answer` / `ice-candidate` | — | Relayed to the other peer |
+
+**`call-ended` reasons:** `user-ended` · `all-participants-left` · `reconnection-timeout` · `caller-timeout`
+
+---
+
+## Call Flows
+
+### Flow A — Direct Join (no ringing)
+
+Both peers know the session ID and join directly.
+
+```
+Client A                    Server                     Client B
+   |                           |                           |
+   |── POST /calls/session ──▶ |                           |
+   |◀─ 201 { sessionId } ──── |                           |
+   |                           |                           |
+   |── join-session ─────────▶ |                           |
+   |                           |── participant-joined ───▶ (no one yet)
+   |                           |                           |
+   |                           |◀── join-session ─────────|
+   |◀─ participant-joined ──── |                           |
+   |◀─ call-started ────────── |── call-started ─────────▶|
+   |                           |   activateSession()        |
+   |── offer ─────────────────▶|── offer ────────────────▶|
+   |                           |◀── answer ───────────────|
+   |◀─ answer ──────────────── |                           |
+   |⟺ ice-candidate (both) ───▶|◀──── ice-candidate ──────|
+   |                           |                           |
+   |         [media flows peer-to-peer via WebRTC]         |
+   |                           |                           |
+   |── end-call ──────────────▶|                           |
+   |◀─ call-ended ─────────── |── call-ended ────────────▶|
+```
+
+### Flow B — Ringing Flow (caller/callee)
+
+Caller rings a specific callee by userId before joining the room.
+
+```
+Caller                      Server                      Callee
+   |                           |                           |
+   |── POST /calls/session ──▶ |                           |
+   |◀─ 201 { sessionId } ──── |                           |
+   |                           |                           |
+   |── initiate-call ─────────▶|── incoming-call ────────▶|
+   |   { sessionId,            |   { sessionId, callerId } |
+   |     callerId, calleeId }  |                           |
+   |                           |   [45s ring timer starts] |
+   |                           |                           |
+   |                           |◀── accept-call ───────── |
+   |◀─ call-accepted ───────── |                           |
+   |                           |   [ring timer cleared]    |
+   |                           |                           |
+   |── join-session ─────────▶ |◀── join-session ─────────|
+   |◀─ call-started ────────── |── call-started ─────────▶|
+   |                           |                           |
+   |         [WebRTC negotiation & media]                   |
+```
+
+**Rejection path:**
+```
+   |                           |◀── reject-call ───────── |
+   |◀─ call-rejected ───────── |                           |
+   |   [call ends]             |                           |
+```
+
+**No answer (45s timeout):**
+```
+   |◀─ call-timeout ─────────  |── call-ended ───────────▶|
+   |   { reason: no-answer }   |   { reason: caller-timeout }
+```
+
+**Callee offline:**
+```
+   |◀─ call-failed ─────────── |
+   |   { reason: user-unavailable }
+```
+
+### Flow C — Reconnection
+
+Peer disconnects unexpectedly; 30s window to rejoin.
+
+```
+Client A                    Server                     Client B
+   |                           |                           |
+   |         [call active]     |                           |
+   |                           |    Client B disconnects   |
+   |                           |◀── disconnect ────────────|
+   |◀─ participant-left ─────  |   pauseSession()          |
+   |◀─ call-paused ─────────── |   [30s timer starts]      |
+   |   { reconnectTimeout: 30 }|                           |
+   |                           |                           |
+   |                           |◀── join-session ──────── | (within 30s)
+   |◀─ call-resumed ────────── |── call-resumed ─────────▶|
+   |                           |   resumeSession()         |
+   |                           |   [timer cleared]         |
+```
+
+**If 30s expires with no reconnect:**
+```
+   |◀─ call-ended ─────────── |
+   |   { reason: reconnection-timeout }
+```
+
+---
+
+## Controls (Real-time)
+
+### Mute / Unmute
+
+```
+Client A ── mute-changed { muted: true } ──▶ Server ── mute-changed ──▶ Client B
+```
+- Server relays to the other peer in the session room
+- SDK: `sdk.setMuted(true)` / `sdk.setMuted(false)` / `sdk.isMuted()`
+
+### Camera On / Off
+
+```
+Client A ── video-changed { videoEnabled: false } ──▶ Server ── video-changed ──▶ Client B
+```
+- SDK: `sdk.setVideoEnabled(true/false)` / `sdk.isVideoEnabled()`
+
+---
+
+## Connection Quality Monitoring
+
+SDK polls `RTCPeerConnection.getStats()` every 4 seconds.
+
+| Metric | Good | Weak | Poor |
+|--------|------|------|------|
+| RTT | < 300ms | 300–600ms | > 600ms |
+| Packet loss | < 5% | 5–15% | > 15% |
+
+- SDK emits `connection-quality` event: `{ quality, rtt, lossRate }`
+- ICE state changes (`failed`, `disconnected`, `closed`) emit `connection-lost`
+
+---
+
+## Heartbeat
+
+- Server pings all room participants every 5s
+- Clients respond with `pong`
+- Detects stale connections
+
+---
+
+## SDK Reference
+
+```javascript
+// Initialise
+const sdk = new CallSDK({
+    apiKey: 'cp_live_...',
+    userId: 'user-alice',
+    socketUrl: 'https://your-platform.com',
+    audio: true,
+    video: false,              // true for video calls
+});
+
+await sdk.connect();
+
+// ── Direct join ──────────────────────────────────────────────
+await sdk.joinSession('session-uuid');
+
+// ── Ringing flow ─────────────────────────────────────────────
+await sdk.initiateCall('session-uuid', 'user-bob'); // caller
+
+sdk.on('incoming-call', ({ sessionId, callerId }) => {  // callee
+    sdk.acceptCall(sessionId);   // or sdk.rejectCall(sessionId)
+    sdk.joinSession(sessionId);
+});
+
+// ── Media events ─────────────────────────────────────────────
+sdk.on('local-stream',  (stream) => { videoEl.srcObject = stream; });
+sdk.on('remote-stream', (stream) => { videoEl.srcObject = stream; });
+
+// ── Call lifecycle ────────────────────────────────────────────
+sdk.on('call-started',  () => { /* start UI timer */ });
+sdk.on('call-paused',   ({ reason }) => { /* show reconnecting */ });
+sdk.on('call-resumed',  () => { /* restore UI */ });
+sdk.on('call-ended',    ({ reason, duration }) => { /* cleanup */ });
+
+// ── Controls ─────────────────────────────────────────────────
+sdk.setMuted(true);             // mute mic
+sdk.setVideoEnabled(false);     // turn off camera
+sdk.getCallDuration();          // seconds since call started
+sdk.getStatus();                // idle|ringing|connecting|connected|ended|failed
+
+// ── End call ─────────────────────────────────────────────────
+await sdk.endCall();            // immediate, no reconnection window
+await sdk.leaveSession();       // graceful leave, opens reconnection window
+
+// ── Quality & errors ─────────────────────────────────────────
+sdk.on('connection-quality', ({ quality, rtt, lossRate }) => {});
+sdk.on('connection-lost',    ({ state }) => {});
+sdk.on('status-changed',     ({ status }) => {});
+sdk.on('error',              (err) => {});
+```
+
+---
+
+## File Map
+
+```
+src/modules/calls/
+├── call.controller.js       — HTTP request handlers
+├── call.routes.js           — Express routes
+├── call.session.service.js  — Business logic, status transitions
+├── signaling.socket.js      — All Socket.IO event handling
+└── CALL_FLOW.md             — This document
+
+src/repository/
+└── call.repository.js       — DB queries (CallSession model)
+
+src/database/models/
+└── call.session.model.js    — Sequelize model
+
+src/helpers/sockets/
+├── connectionManager.js     — userId ↔ socket object registry
+├── roomManager.js           — Room membership tracking
+└── socketRegistry.js        — userId ↔ socketId mapping
+
+sdk/calls-sdk/
+├── index.js                 — Public SDK API
+├── callManager.js           — Core logic, event handling
+├── signaling.js             — Socket.IO connection
+├── webrtc.js                — RTCPeerConnection wrapper
+├── constants.js             — EVENTS, CALL_STATUS, QUALITY enums
+└── EventEmitter.js          — Base event emitter
+```
+
+---
+
+_Last updated: 2026-06-23_

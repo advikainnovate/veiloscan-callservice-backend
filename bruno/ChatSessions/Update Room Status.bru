@@ -1,0 +1,32 @@
+meta {
+  name: Update Room Status
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/chat-sessions/rooms/{{roomId}}/status
+  body: json
+  auth: none
+}
+
+headers {
+  x-api-key: {{apiKey}}
+}
+
+body:json {
+  {
+    "status": "archived"
+  }
+}
+
+docs {
+  # Update Room Status
+
+  Transitions the conversation state.
+
+  ## Status values
+  - `active`   — normal chat
+  - `archived` — chat preserved but hidden
+  - `closed`   — chat ended, no new messages
+}
