@@ -1,0 +1,27 @@
+meta {
+  name: API Key Activity
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/api-keys/activity
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+params:query {
+  page: 1
+  limit: 20
+}
+
+docs {
+  # API Key Activity
+
+  Returns all API keys sorted by lastUsedAt (most recently used first).
+  Includes the owning organization name.
+  apiKeyHash is excluded.
+}

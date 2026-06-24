@@ -1,0 +1,20 @@
+meta {
+  name: Get Organization Detail
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/organizations/{{orgId}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+docs {
+  # Get Organization Detail
+
+  Returns full org details including all API keys (hashes excluded).
+}

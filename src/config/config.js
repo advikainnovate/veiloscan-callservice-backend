@@ -7,6 +7,8 @@ module.exports = {
         BASE_URL: process.env.BASE_URL,
         SW_USERNAME: process.env.SW_USERNAME,
         SW_PASSWORD: process.env.SW_PASSWORD,
+        ADMIN_USERNAME: process.env.ADMIN_USERNAME || 'admin',
+        ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'admin123',
     },
     JWT: {
         ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET,

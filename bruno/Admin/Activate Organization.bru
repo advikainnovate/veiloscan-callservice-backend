@@ -1,0 +1,21 @@
+meta {
+  name: Activate Organization
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/organizations/{{orgId}}/activate
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+docs {
+  # Activate Organization
+
+  Sets isActive = true. The org's API keys will be usable again.
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Chat Stats
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/chats/stats
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+params:query {
+  from: 
+  to: 
+}
+
+docs {
+  # Chat Stats
+
+  Returns chat analytics for a date range:
+  - total messages
+  - breakdown by status (sent/delivered/read/failed)
+  - breakdown by type (text/image/file)
+  - room counts (total / active)
+
+  ## Query params
+  - from, to — ISO date strings
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Call Stats
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/calls/stats
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+params:query {
+  from: 
+  to: 
+}
+
+docs {
+  # Call Stats
+
+  Returns call analytics for a date range:
+  - total calls
+  - breakdown by status (idle/ringing/connecting/connected/ended/failed)
+  - average duration in seconds
+  - audio vs video split
+
+  ## Query params
+  - from, to — ISO date strings (e.g. 2026-06-01, 2026-06-30)
+}

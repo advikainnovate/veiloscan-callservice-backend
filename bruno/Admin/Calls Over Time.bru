@@ -1,0 +1,33 @@
+meta {
+  name: Calls Over Time
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/calls/over-time
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+params:query {
+  from: 
+  to: 
+  interval: day
+}
+
+docs {
+  # Calls Over Time
+
+  Returns call volume grouped by time period — useful for charts.
+
+  ## Query params
+  - from, to   — ISO date range
+  - interval   — hour | day | month (default: day)
+
+  ## Response
+  Array of { period, count }
+}

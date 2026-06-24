@@ -1,0 +1,25 @@
+meta {
+  name: Dashboard Overview
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/overview
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+docs {
+  # Dashboard Overview
+
+  Returns a high-level snapshot of the platform:
+  - Total / active organizations
+  - Active / total calls
+  - Total messages
+  - Total chat rooms
+  - Active API keys
+}

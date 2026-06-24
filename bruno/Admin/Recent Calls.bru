@@ -1,0 +1,33 @@
+meta {
+  name: Recent Calls
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/calls/recent
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+params:query {
+  page: 1
+  limit: 20
+  status: 
+  from: 
+  to: 
+}
+
+docs {
+  # Recent Calls
+
+  Paginated list of call sessions, newest first.
+
+  ## Query params
+  - status — filter by: idle | ringing | connecting | connected | ended | failed
+  - from, to — ISO date range
+  - page, limit — pagination
+}

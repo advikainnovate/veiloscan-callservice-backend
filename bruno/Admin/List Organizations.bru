@@ -1,0 +1,27 @@
+meta {
+  name: List Organizations
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/organizations
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+params:query {
+  page: 1
+  limit: 20
+  search: 
+}
+
+docs {
+  # List Organizations
+
+  Returns all organizations with their API keys.
+  Supports search by name and pagination.
+}

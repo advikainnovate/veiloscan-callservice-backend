@@ -1,0 +1,22 @@
+meta {
+  name: Deactivate Organization
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/organizations/{{orgId}}/deactivate
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+docs {
+  # Deactivate Organization
+
+  Sets isActive = false. All API key auth checks will reject this org's keys
+  until reactivated.
+}

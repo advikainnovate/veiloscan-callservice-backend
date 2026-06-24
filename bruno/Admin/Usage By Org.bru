@@ -1,0 +1,32 @@
+meta {
+  name: Usage By Organization
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/usage
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+params:query {
+  page: 1
+  limit: 20
+  from: 
+  to: 
+}
+
+docs {
+  # Usage By Organization
+
+  Returns all organizations sorted by call request count (descending).
+  Includes callRequestsCount and chatRequestsCount per org.
+
+  ## Query params
+  - page, limit — pagination
+  - from, to    — ISO date range filter
+}

@@ -1,0 +1,33 @@
+meta {
+  name: Messages Over Time
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/chats/over-time
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+params:query {
+  from: 
+  to: 
+  interval: day
+}
+
+docs {
+  # Messages Over Time
+
+  Returns message volume grouped by time period — useful for charts.
+
+  ## Query params
+  - from, to   — ISO date range
+  - interval   — hour | day | month (default: day)
+
+  ## Response
+  Array of { period, count }
+}

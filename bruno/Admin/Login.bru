@@ -1,0 +1,33 @@
+meta {
+  name: Admin Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/admin/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "{{adminUsername}}",
+    "password": "{{adminPassword}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setVar("adminToken", res.body.data.token);
+  }
+}
+
+docs {
+  # Admin Login
+
+  Returns a JWT token. All other admin endpoints require:
+  Authorization: Bearer <token>
+
+  Token is automatically saved to `adminToken` variable after this request.
+}
