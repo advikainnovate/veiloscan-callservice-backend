@@ -2,28 +2,44 @@
 
 /**
  * Adds callerUserId, calleeUserId, hasVideo to call_sessions.
- * Replaces old ENUM ('created','active','paused','ended') with full status set.
+ * Replaces old ENUM with full status set: idle/ringing/connecting/connected/paused/ended/failed
+ *
+ * Idempotent — safe to re-run if a previous attempt partially succeeded.
  */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        // 1. Add new columns
-        await queryInterface.addColumn('call_sessions', 'callerUserId', {
-            type: Sequelize.STRING,
-            allowNull: true,
-        });
+        const table = await queryInterface.describeTable('call_sessions');
 
-        await queryInterface.addColumn('call_sessions', 'calleeUserId', {
-            type: Sequelize.STRING,
-            allowNull: true,
-        });
+        // 1. Add columns only if they don't exist yet
+        if (!table['callerUserId']) {
+            await queryInterface.addColumn('call_sessions', 'callerUserId', {
+                type: Sequelize.STRING,
+                allowNull: true,
+            });
+        }
 
-        await queryInterface.addColumn('call_sessions', 'hasVideo', {
-            type: Sequelize.BOOLEAN,
-            allowNull: false,
-            defaultValue: false,
-        });
+        if (!table['calleeUserId']) {
+            await queryInterface.addColumn('call_sessions', 'calleeUserId', {
+                type: Sequelize.STRING,
+                allowNull: true,
+            });
+        }
 
-        // 2. Migrate status column to VARCHAR, drop old ENUM, recreate with full set
+        if (!table['hasVideo']) {
+            await queryInterface.addColumn('call_sessions', 'hasVideo', {
+                type: Sequelize.BOOLEAN,
+                allowNull: false,
+                defaultValue: false,
+            });
+        }
+
+        // 2. Rebuild the status ENUM with the full set
+        // Drop default first so the type is not referenced, then alter safely
+        await queryInterface.sequelize.query(`
+            ALTER TABLE "call_sessions"
+                ALTER COLUMN "status" DROP DEFAULT;
+        `);
+
         await queryInterface.sequelize.query(`
             ALTER TABLE "call_sessions"
                 ALTER COLUMN "status" TYPE VARCHAR(50);
@@ -38,6 +54,12 @@ module.exports = {
                 AS ENUM ('idle','ringing','connecting','connected','paused','ended','failed');
         `);
 
+        // Map any legacy values that may be in existing rows
+        await queryInterface.sequelize.query(`
+            UPDATE "call_sessions" SET "status" = 'ended'
+                WHERE "status" NOT IN ('idle','ringing','connecting','connected','paused','ended','failed');
+        `);
+
         await queryInterface.sequelize.query(`
             ALTER TABLE "call_sessions"
                 ALTER COLUMN "status" TYPE "enum_call_sessions_status"
@@ -46,17 +68,19 @@ module.exports = {
 
         await queryInterface.sequelize.query(`
             ALTER TABLE "call_sessions"
-                ALTER COLUMN "status" SET DEFAULT 'idle';
+                ALTER COLUMN "status" SET DEFAULT 'idle'::"enum_call_sessions_status";
         `);
     },
 
     async down(queryInterface, Sequelize) {
-        // Remove added columns
         await queryInterface.removeColumn('call_sessions', 'callerUserId');
         await queryInterface.removeColumn('call_sessions', 'calleeUserId');
         await queryInterface.removeColumn('call_sessions', 'hasVideo');
 
-        // Revert status ENUM to original
+        await queryInterface.sequelize.query(`
+            ALTER TABLE "call_sessions"
+                ALTER COLUMN "status" DROP DEFAULT;
+        `);
         await queryInterface.sequelize.query(`
             ALTER TABLE "call_sessions"
                 ALTER COLUMN "status" TYPE VARCHAR(50);
@@ -67,22 +91,17 @@ module.exports = {
                 AS ENUM ('created','active','paused','ended');
         `);
         await queryInterface.sequelize.query(`
-            ALTER TABLE "call_sessions"
-                ALTER COLUMN "status" TYPE "enum_call_sessions_status"
-                USING (
-                    CASE "status"
-                        WHEN 'connected' THEN 'active'
-                        WHEN 'connecting' THEN 'created'
-                        WHEN 'failed' THEN 'ended'
-                        WHEN 'idle' THEN 'created'
-                        WHEN 'ringing' THEN 'created'
-                        ELSE "status"
-                    END
-                )::"enum_call_sessions_status";
+            UPDATE "call_sessions" SET "status" = 'ended'
+                WHERE "status" NOT IN ('created','active','paused','ended');
         `);
         await queryInterface.sequelize.query(`
             ALTER TABLE "call_sessions"
-                ALTER COLUMN "status" SET DEFAULT 'created';
+                ALTER COLUMN "status" TYPE "enum_call_sessions_status"
+                USING "status"::"enum_call_sessions_status";
+        `);
+        await queryInterface.sequelize.query(`
+            ALTER TABLE "call_sessions"
+                ALTER COLUMN "status" SET DEFAULT 'created'::"enum_call_sessions_status";
         `);
     },
 };

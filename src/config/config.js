@@ -11,10 +11,10 @@ module.exports = {
         ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'admin123',
     },
     JWT: {
-        ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET,
-        REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET,
-        ACCESS_TOKEN_TIME: '2d', //process.env.ACCESS_TOKEN_TIME,
-        REFRESH_TOKEN_TIME: '7d', //process.env.REFRESH_TOKEN_TIME,
+        ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET,
+        REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET,
+        ACCESS_TOKEN_TIME: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '2d',
+        REFRESH_TOKEN_TIME: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN || '7d',
         RESET_TOKEN_TIME: '10m',
     },
     DB: {
