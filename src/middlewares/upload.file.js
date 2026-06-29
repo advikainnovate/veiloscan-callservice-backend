@@ -1,6 +1,5 @@
 const multer = require('multer');
 const { logger } = require('../utils');
-const { MESSAGES } = require('../config');
 const { BadRequestException } = require('../helpers/errorResponse');
 const path = require('path');
 const fs = require('fs');
@@ -43,7 +42,7 @@ const fileFilter = (req, file, cb) => {
     if (allowedFileFormats.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new BadRequestException(`${MESSAGES.INVALID_FILE_FORMAT}: ${file.mimetype} is not supported`), false);
+        cb(new BadRequestException(`Invalid file format: ${file.mimetype} is not supported`), false);
     }
 };
 

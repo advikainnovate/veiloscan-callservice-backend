@@ -1,9 +1,10 @@
 const router = require('express').Router();
 const controller = require('./admin.controller');
 const { adminAuth } = require('../../middlewares/adminAuth');
+const { adminLoginLimiter } = require('../../middlewares/rateLimiter');
 
 // ── Auth (public) ─────────────────────────────────────────────────────────────
-router.post('/login', controller.login);
+router.post('/login', adminLoginLimiter, controller.login);
 
 // All routes below require a valid admin JWT
 router.use(adminAuth);

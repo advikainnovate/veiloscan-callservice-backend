@@ -1,4 +1,4 @@
-const { Op, fn, col, literal } = require('sequelize');
+const { Op, fn, col } = require('sequelize');
 const db = require('../database/models');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ const getOverview = async () => {
         db.Organization.count(),
         db.Organization.count({ where: { isActive: true } }),
         db.CallSession.count(),
-        db.CallSession.count({ where: { status: ['connected', 'ringing', 'connecting'] } }),
+        db.CallSession.count({ where: { status: { [Op.in]: ['connected', 'ringing', 'connecting'] } } }),
         db.ChatMessage.count(),
         db.ChatRoom.count(),
         db.ApiKey.count({ where: { isActive: true } }),
@@ -103,7 +103,8 @@ const getCallStats = async ({ from, to, organizationId } = {}) => {
 
 const getCallsOverTime = async ({ from, to, interval = 'day' } = {}) => {
     const where = dateRange(from, to);
-    const trunc  = interval === 'hour' ? 'hour' : interval === 'month' ? 'month' : 'day';
+    const VALID_INTERVALS = { hour: 'hour', day: 'day', month: 'month' };
+    const trunc = VALID_INTERVALS[interval] || 'day';
 
     const rows = await db.CallSession.findAll({
         where,
@@ -111,8 +112,8 @@ const getCallsOverTime = async ({ from, to, interval = 'day' } = {}) => {
             [fn('DATE_TRUNC', trunc, col('createdAt')), 'period'],
             [fn('COUNT', col('id')), 'count'],
         ],
-        group: [literal(`DATE_TRUNC('${trunc}', "createdAt")`)],
-        order:  [[literal(`DATE_TRUNC('${trunc}', "createdAt")`), 'ASC']],
+        group: [fn('DATE_TRUNC', trunc, col('createdAt'))],
+        order:  [[fn('DATE_TRUNC', trunc, col('createdAt')), 'ASC']],
         raw: true,
     });
 
@@ -167,7 +168,8 @@ const getChatStats = async ({ from, to } = {}) => {
 
 const getMessagesOverTime = async ({ from, to, interval = 'day' } = {}) => {
     const where = dateRange(from, to);
-    const trunc  = interval === 'hour' ? 'hour' : interval === 'month' ? 'month' : 'day';
+    const VALID_INTERVALS = { hour: 'hour', day: 'day', month: 'month' };
+    const trunc = VALID_INTERVALS[interval] || 'day';
 
     const rows = await db.ChatMessage.findAll({
         where,
@@ -175,8 +177,8 @@ const getMessagesOverTime = async ({ from, to, interval = 'day' } = {}) => {
             [fn('DATE_TRUNC', trunc, col('createdAt')), 'period'],
             [fn('COUNT', col('id')), 'count'],
         ],
-        group: [literal(`DATE_TRUNC('${trunc}', "createdAt")`)],
-        order:  [[literal(`DATE_TRUNC('${trunc}', "createdAt")`), 'ASC']],
+        group: [fn('DATE_TRUNC', trunc, col('createdAt'))],
+        order:  [[fn('DATE_TRUNC', trunc, col('createdAt')), 'ASC']],
         raw: true,
     });
 

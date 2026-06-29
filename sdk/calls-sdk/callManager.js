@@ -24,6 +24,7 @@ export default class CallManager extends EventEmitter {
         this.sessionId   = null;
         this.isInitiator = false;
         this.status      = CALL_STATUS.IDLE;
+        this._hasJoinedRoom = false; // track whether join-session was sent
 
         // internal timers
         this._ringTimer    = null;
@@ -50,6 +51,7 @@ export default class CallManager extends EventEmitter {
     async joinSession(sessionId) {
         if (!this.signaling.socket) await this.connect();
         this.sessionId = sessionId;
+        this._hasJoinedRoom = true;
         this._setStatus(CALL_STATUS.CONNECTING);
         this.signaling.send('join-session', { sessionId, userId: this.userId });
         this.emit(EVENTS.JOINED_SESSION, { sessionId });
@@ -171,11 +173,14 @@ export default class CallManager extends EventEmitter {
             this._ringTimer = null;
             this._setStatus(CALL_STATUS.CONNECTING);
             this.emit(EVENTS.CALL_ACCEPTED, payload);
-            // Caller joins the session room after acceptance
-            this.signaling.send('join-session', {
-                sessionId: payload.sessionId,
-                userId: this.userId,
-            });
+            // Only join the session room if we haven't already joined
+            if (!this._hasJoinedRoom) {
+                this._hasJoinedRoom = true;
+                this.signaling.send('join-session', {
+                    sessionId: payload.sessionId,
+                    userId: this.userId,
+                });
+            }
         });
 
         // ── Caller notified callee rejected ──
@@ -357,6 +362,7 @@ export default class CallManager extends EventEmitter {
         clearTimeout(this._ringTimer);
         this._ringTimer = null;
         this._startTime = null;
+        this._hasJoinedRoom = false;
         this._cleanupWebRTC();
     }
 }

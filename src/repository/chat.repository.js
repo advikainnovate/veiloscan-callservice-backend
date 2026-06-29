@@ -1,4 +1,5 @@
 const { ChatRoom, ChatMessage } = require('../database/models');
+const { Op } = require('sequelize');
 
 // ── Rooms ─────────────────────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ const saveMessage = async (payload) => {
 const getMessages = async (roomId, { limit = 50, before = null } = {}) => {
     const where = { roomId };
     if (before) {
-        where.createdAt = { [require('sequelize').Op.lt]: before };
+        where.createdAt = { [Op.lt]: before };
     }
     return ChatMessage.findAll({
         where,
@@ -63,7 +64,7 @@ const markRead = async (messageId) => {
 const markRoomMessagesRead = async (roomId, receiverId) => {
     await ChatMessage.update(
         { status: 'read', readAt: new Date() },
-        { where: { roomId, receiverId, status: { [require('sequelize').Op.ne]: 'read' } } }
+        { where: { roomId, receiverId, status: { [Op.ne]: 'read' } } }
     );
 };
 

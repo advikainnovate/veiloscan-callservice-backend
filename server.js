@@ -9,7 +9,9 @@ const { socketApiKeyAuth } = require('./src/middlewares');
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: process.env.ALLOWED_ORIGINS
+            ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+            : '*',
         methods: ['GET', 'POST'],
     },
 });

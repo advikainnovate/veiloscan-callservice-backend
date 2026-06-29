@@ -21,9 +21,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(compression());
 app.use(
     cors({
-        origin: '*',
+        origin: process.env.ALLOWED_ORIGINS
+            ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+            : '*',
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
     })
 );
 app.use(helmet());
@@ -32,8 +34,13 @@ app.use(morgan('[:date[web]] :method :url :status :response-time ms - :res[conte
 const filePath = path.join(__dirname, './docs/swagger.json');
 const publicPath = path.join(__dirname, 'public');
 
-// Read the Swagger JSON file
-const swaggerDocument = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+// Read the Swagger JSON file — graceful fallback if file missing
+let swaggerDocument = {};
+try {
+    swaggerDocument = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+} catch (_) {
+    console.warn('[Swagger] swagger.json not found — API docs disabled');
+}
 
 // Swagger UI route
 app.use('/api-docs', swaggerAuthenticate, swaggerUi.serve, swaggerUi.setup(swaggerDocument));

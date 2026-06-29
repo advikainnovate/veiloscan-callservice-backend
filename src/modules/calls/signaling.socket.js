@@ -3,7 +3,15 @@ const roomManager = require('../../helpers/sockets/roomManager');
 const connectionManager = require('../../helpers/sockets/connectionManager');
 const db = require('../../database/models');
 
-// Per-session state: timers, reconnection, ringing
+/**
+ * Per-session in-memory state (timers, reconnection windows, ringing).
+ *
+ * ⚠️  SCALING NOTE: This Map is process-local. In a multi-process deployment
+ * (PM2 cluster, Kubernetes pods) each process has its own copy — two clients
+ * on different processes will not share session state.
+ * To scale horizontally, replace this Map with a Redis-backed store and use
+ * the Socket.IO Redis adapter for room/event routing.
+ */
 const sessionState = new Map();
 
 const getSessionState = (sessionId) => {

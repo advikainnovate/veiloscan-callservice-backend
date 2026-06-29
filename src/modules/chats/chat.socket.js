@@ -3,23 +3,36 @@ const roomManager = require('../../helpers/sockets/roomManager');
 const connectionManager = require('../../helpers/sockets/connectionManager');
 const db = require('../../database/models');
 
-// userId → { status, lastSeen, away timer }
+// userId → { status, lastSeen, awayTimer, orgId }
+/**
+ * ⚠️  SCALING NOTE: presenceState is process-local (in-memory Map).
+ * In a multi-process deployment this state is not shared across processes.
+ * Replace with a Redis-backed presence store to support horizontal scaling.
+ */
 const presenceState = new Map();
 
 const AWAY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes idle → away
 
-const setPresence = (io, userId, status) => {
-    const prev = presenceState.get(userId) || {};
-    presenceState.set(userId, {
-        ...prev,
-        status,
-        lastSeen: status === 'offline' ? new Date() : prev.lastSeen,
-    });
-    io.emit('presence-changed', { userId, status, lastSeen: presenceState.get(userId).lastSeen });
+const setPresence = (io, userId, status, orgId = null) => {
+    const state = presenceState.get(userId) || {};
+    state.status = status;
+    if (status === 'offline') state.lastSeen = new Date();
+    if (orgId) state.orgId = orgId;
+    presenceState.set(userId, state);
+
+    const payload = { userId, status, lastSeen: state.lastSeen || null };
+    // Scope presence to the organization — avoids leaking cross-org presence
+    const room = state.orgId ? `org:${state.orgId}` : null;
+    if (room) {
+        io.to(room).emit('presence-changed', payload);
+    } else {
+        io.emit('presence-changed', payload);
+    }
 };
 
 const startAwayTimer = (io, userId) => {
     const state = presenceState.get(userId) || {};
+    presenceState.set(userId, state); // ensure it's in the map before mutating
     if (state.awayTimer) clearTimeout(state.awayTimer);
     state.awayTimer = setTimeout(() => {
         const cur = presenceState.get(userId);
@@ -27,20 +40,24 @@ const startAwayTimer = (io, userId) => {
             setPresence(io, userId, 'away');
         }
     }, AWAY_TIMEOUT_MS);
-    presenceState.set(userId, { ...state });
 };
 
 const clearAwayTimer = (userId) => {
     const state = presenceState.get(userId);
     if (state?.awayTimer) {
         clearTimeout(state.awayTimer);
-        presenceState.set(userId, { ...state, awayTimer: null });
+        state.awayTimer = null;
     }
 };
 
 module.exports = (io) => {
     io.on('connection', (socket) => {
         console.log(`[Chat] Socket connected: ${socket.id}`);
+
+        // Join org-scoped presence room so presence events stay within org
+        if (socket.organizationId) {
+            socket.join(`org:${socket.organizationId}`);
+        }
 
         // ── SET PRESENCE ─────────────────────────────────────────────────────
         socket.on('set-presence', ({ userId, status }) => {
@@ -49,7 +66,7 @@ module.exports = (io) => {
             socket.userId = userId;
 
             const validStatus = ['online', 'away', 'offline'].includes(status) ? status : 'online';
-            setPresence(io, userId, validStatus);
+            setPresence(io, userId, validStatus, socket.organizationId);
 
             if (validStatus === 'online') {
                 startAwayTimer(io, userId);
@@ -82,7 +99,7 @@ module.exports = (io) => {
                     socket.userId = userId;
                     // Mark online when joining a room
                     if (!presenceState.get(userId)?.status || presenceState.get(userId)?.status === 'offline') {
-                        setPresence(io, userId, 'online');
+                        setPresence(io, userId, 'online', socket.organizationId);
                     }
                     startAwayTimer(io, userId);
                 }
@@ -228,7 +245,7 @@ module.exports = (io) => {
 
             if (socket.userId) {
                 clearAwayTimer(socket.userId);
-                setPresence(io, socket.userId, 'offline');
+                setPresence(io, socket.userId, 'offline', socket.organizationId);
             }
 
             connectionManager.removeSocket(socket);

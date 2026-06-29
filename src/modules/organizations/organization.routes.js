@@ -1,22 +1,21 @@
 const express = require('express');
 const organizationController = require('./organization.controller');
 const { apiKeyAuth } = require('../../middlewares');
+const { publicOrgLimiter } = require('../../middlewares/rateLimiter');
 
 const router = express.Router();
 
 /*
 |--------------------------------------------------------------------------
 | Public Routes — No auth required
-| API keys are service credentials, not organization management credentials.
-| Creating an org and its first API key must be possible before any key exists.
 |--------------------------------------------------------------------------
 */
 
-// Create a new organization (bootstrap, no auth)
-router.post('/', organizationController.createOrganization);
+// Create a new organization (bootstrap, no auth) — rate limited
+router.post('/', publicOrgLimiter, organizationController.createOrganization);
 
-// Create an API key for an organization (bootstrap, no auth)
-router.post('/:id/api-keys', organizationController.createApiKey);
+// Create an API key for an organization (bootstrap, no auth) — rate limited
+router.post('/:id/api-keys', publicOrgLimiter, organizationController.createApiKey);
 
 /*
 |--------------------------------------------------------------------------

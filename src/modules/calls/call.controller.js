@@ -19,6 +19,10 @@ const getSession = async (req, res, next) => {
     try {
         const session = await callService.getSession(req.params.sessionId);
 
+        if (!session) {
+            return res.status(404).json({ success: false, message: 'Session not found' });
+        }
+
         return res.json({ success: true, data: session });
     } catch (err) {
         next(err);
