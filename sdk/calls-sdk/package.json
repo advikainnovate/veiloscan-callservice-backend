@@ -1,0 +1,29 @@
+{
+  "name": "@veiloscan/calls-sdk",
+  "version": "1.0.0",
+  "description": "Web SDK for integrating Veiloscan real-time calling into websites",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./constants": "./constants.js",
+    "./browser": "./browser.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "*.js",
+    "README.md",
+    "INTEGRATION.md"
+  ],
+  "keywords": [
+    "webrtc",
+    "sdk",
+    "voip",
+    "socket.io",
+    "veiloscan"
+  ],
+  "license": "ISC",
+  "peerDependencies": {
+    "socket.io-client": "^4.7.2"
+  }
+}

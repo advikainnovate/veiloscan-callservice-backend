@@ -1,0 +1,22 @@
+{
+  "name": "@veiloscan/chats-sdk",
+  "version": "1.0.0",
+  "description": "Web SDK for integrating Veiloscan chat features into websites",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "*.js",
+    "README.md"
+  ],
+  "keywords": [
+    "chat",
+    "sdk",
+    "socket.io",
+    "veiloscan"
+  ],
+  "license": "ISC"
+}

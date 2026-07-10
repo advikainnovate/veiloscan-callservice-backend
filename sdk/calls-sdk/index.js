@@ -1,6 +1,7 @@
 import CallManager from './callManager.js';
+import { CALL_STATUS, EVENTS, QUALITY } from './constants.js';
 
-export default class CallSDK {
+export class CallSDK {
     constructor(config) {
         this.manager = new CallManager(config);
     }
@@ -30,3 +31,6 @@ export default class CallSDK {
     on(event, callback)                         { this.manager.on(event, callback); }
     off(event, callback)                        { this.manager.off(event, callback); }
 }
+
+export { CallManager, CALL_STATUS, EVENTS, QUALITY };
+export default CallSDK;

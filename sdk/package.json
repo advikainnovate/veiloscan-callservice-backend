@@ -1,0 +1,8 @@
+{
+  "name": "@veiloscan/sdk-monorepo",
+  "private": true,
+  "workspaces": [
+    "calls-sdk",
+    "chats-sdk"
+  ]
+}
