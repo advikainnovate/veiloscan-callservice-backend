@@ -1,12 +1,12 @@
 const { CONFIG } = require('../config');
-const { BadRequestException } = require('../helpers');
+const { UnauthorizedException } = require('../helpers');
 const jwt = require('jsonwebtoken');
 
 exports.verifyAccessToken = (token) => {
     // eslint-disable-next-line no-unused-vars
     return new Promise((resolve, reject) => {
         jwt.verify(token, CONFIG.JWT.ACCESS_TOKEN_SECRET, (err, decoded) => {
-            if (err) throw new BadRequestException('Invalid Token');
+            if (err) throw new UnauthorizedException('Invalid Token');
             resolve(decoded);
         });
     });
@@ -16,7 +16,7 @@ exports.verifyRefreshToken = (token) => {
     // eslint-disable-next-line no-unused-vars
     return new Promise((resolve, reject) => {
         jwt.verify(token, CONFIG.JWT.REFRESH_TOKEN_SECRET, (err, decoded) => {
-            if (err) throw new BadRequestException('Invalid Token');
+            if (err) throw new UnauthorizedException('Invalid Token');
             resolve(decoded);
         });
     });
@@ -43,9 +43,7 @@ exports.generateResetToken = (payload) => {
 exports.verifyResetToken = (token) => {
     return new Promise((resolve, reject) => {
         jwt.verify(token, CONFIG.JWT.ACCESS_TOKEN_SECRET, (err, decoded) => {
-            if (err || !decoded || decoded.type !== 'reset') {
-                return reject(new BadRequestException('Invalid or expired reset token'));
-            }
+            if (err || decoded.type !== 'reset') throw new BadRequestException('Invalid or expired reset token');
             resolve(decoded);
         });
     });
