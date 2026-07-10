@@ -1,263 +1,159 @@
-# Communication Platform Workflow Documentation
+# VeiloScan Call Service Backend
 
 ## Overview
 
-The Communication Platform provides communication capabilities to external applications through API Keys.
+This repository implements the backend for a call and chat service platform. It exposes REST APIs for organizations, calls, chats, and admin analytics, plus socket support for real-time signaling.
 
-The platform does not:
+The backend is built on:
+- Node.js / Express
+- PostgreSQL / Sequelize
+- Socket.IO
+- Swagger API documentation
 
-- Manage users
-- Handle authentication for end users
-- Store user accounts
+## Quick start
 
-The platform only:
+1. Install dependencies:
 
-- Provides Call Services
-- Provides Chat Services
-- Authenticates Organizations using API Keys
-- Tracks service usage
+   ```bash
+   npm install
+   ```
 
----
+2. Create and configure `.env` at the project root.
 
-# High Level Architecture
+3. Run database migrations before start:
 
-```
-External Website/Application
-            |
-            |
-         API Key
-            |
-            v
-Communication Platform
-            |
-    ------------------
-    |                |
-    v                v
-Call Service    Chat Service
-```
+   ```bash
+   npm run prestart
+   ```
 
-Example:
+4. Start the server:
 
-- Website A wants voice/video calling
-- Website B wants real-time chat
+   ```bash
+   npm start
+   ```
 
-Both applications integrate with the Communication Platform.
+5. For development with auto-reload:
 
----
+   ```bash
+   npm run dev
+   ```
 
-# Organization Onboarding Flow
+## Entrypoint
+
+- `server.js` starts the HTTP server and attaches Socket.IO.
+- `src/app.js` configures Express middleware, routes, Swagger, and static assets.
+
+## API base path
+
+- HTTP APIs are mounted under `/api/v1/`
+- Swagger UI is available at `/api-docs`
+- Health check is available at `/`
+
+## Important scripts
+
+- `npm run format` — format code with Prettier
+- `npm run lint` — lint code with ESLint and fix issues
+- `npm run prestart` — run Sequelize migrations
+- `npm run db:seed` — seed the database
+- `npm run db:reset` — reset migrations
+- `npm run db:create:script` — create the DB using utility script
+- `npm run db:create:service` — create the service database
+- `npm run create-admin` — create an admin account via script
+- `npm run prod:start` — start with PM2 in production
 
-## Step 1 - Create Organization
+## Environment variables
 
-The consumer creates an organization.
+The app loads configuration from `.env`.
 
-Request:
+Minimum recommended variables:
 
-POST /organizations
+- `PORT` - HTTP port
+- `NODE_ENV`
+- `BASE_URL`
+- `ACCESS_TOKEN_SECRET` or `JWT_SECRET`
+- `REFRESH_TOKEN_SECRET` or `JWT_SECRET`
+- `DB_USERNAME`
+- `DB_PASSWORD`
+- `DB_NAME`
+- `DB_HOST`
+- `DB_PORT`
+- `DB_DIALECT`
+- `ALLOWED_ORIGINS`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_SECURE`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `SMTP_FROM`
+- `ADMIN_USERNAME` (default: `admin`)
+- `ADMIN_PASSWORD` (default: `admin123`)
 
-```
-{
-  "name": "Website A"
-}
-```
+## Auth
 
-Response:
+- HTTP API routes under `/api/v1/calls` and `/api/v1/chat-sessions` require an API key via `x-api-key`.
+- `/api/v1/organizations` allows organization creation and API key creation without auth.
+- Admin routes under `/api/v1/admin` require JWT authentication.
+- Socket.io connections are authenticated via API key.
 
-```
-{
-  "id": "org-uuid",
-  "name": "Website A"
-}
-```
+## Main routes
 
-**Important:** An organization must have at least one active API key. The platform enforces this rule and tracks usage counts for calls and chat messages per organization.
+### Health
 
-**Endpoint:** `GET /api/v1/organizations/me` returns the authenticated organization's details, including its API keys and usage counters.
+- `GET /` — service health check
+- `GET /api/v1/healthz` — API health check
 
----
-
-## Step 2 - Create API Key
-
-Request:
-
-POST /organizations/{organizationId}/api-keys
-
-```
-{
-  "name": "Production"
-}
-```
-
-Response:
-
-```
-{
-  "apiKey": "cp_live_xxxxxxxxx"
-}
-```
-
-Important:
-
-The API Key is only shown once.
-
-The platform stores only a hash of the API Key.
-
----
-
-## Step 3 - Store API Key
-
-The organization stores the API Key securely.
-
-Example:
-
-```
-COMMUNICATION_API_KEY=cp_live_xxxxxxxxx
-```
-
----
-
-# Call Service Workflow
-
-## Goal
-
-Allow two users from an external application to establish a WebRTC call.
-
----
-
-# Call Architecture
-
-```
-User A
-   |
-Website A
-   |
-Communication SDK
-   |
-Communication Platform
-   |
-Communication SDK
-   |
-Website A
-   |
-User B
-```
-
-The Communication Platform does not carry audio/video.
-
-It only performs signaling.
-
-Audio and video flow directly between browsers using WebRTC.
-
----
-
-# Call SDK Responsibilities
-
-The Call SDK handles:
-
-- Socket Connection
-- WebRTC Peer Connection
-- Offer Generation
-- Answer Generation
-- ICE Candidate Handling
-- Event Management
-
-Developers should not need to manually manage WebRTC internals.
-
----
-
-# Call Flow
-
-## Step 1 - Initialize SDK
-
-Website A initializes the SDK.
-
-```
-const callManager = new CallManager({
-    apiKey: "cp_live_xxxxxxxxx"
-});
-```
-
-The SDK authenticates with the platform using the API Key.
-
----
-
-## Step 2 - User Joins Session
-
-User A wants to start a call.
-
-```
-callManager.joinSession("session-123");
-```
-
-SDK emits:
-
-```
-join-session
-```
-
-Platform creates or joins the session.
-
----
-
-## Step 3 - Second User Joins
-
-User B joins the same session.
-
-```
-callManager.joinSession("session-123");
-```
-
-Platform detects two participants.
-
-Platform emits:
-
-```
-call-started
-```
-
----
-
-## Step 4 - Offer Creation
-
-SDK automatically creates a WebRTC Offer.
-
-```
-offer
-```
-
-Offer is sent through the Communication Platform.
-
----
-
-## Step 5 - Answer Creation
-
-Second SDK receives the Offer.
-
-SDK automatically generates:
-
-```
-answer
-```
-
-Answer is routed through the Communication Platform.
-
----
-
-## Step 6 - ICE Candidate Exchange
-
-Both SDKs exchange ICE candidates.
-
-```
-ice-candidate
-```
-
-The platform only relays these messages.
-
----
-
-## Step 7 - Peer Connection Established
-
-Direct browser-to-browser connection is established.
+### Organizations
+
+- `POST /api/v1/organizations` — create organization
+- `POST /api/v1/organizations/:id/api-keys` — create API key for an organization
+- `GET /api/v1/organizations/me` — get authenticated org details
+- `PUT /api/v1/organizations/me` — update organization
+- `DELETE /api/v1/organizations/me` — delete organization
+- `GET /api/v1/organizations/me/api-keys` — list organization API keys
+- `PATCH /api/v1/organizations/me/api-keys/:apiKeyId/revoke` — revoke API key
+
+### Calls
+
+- `POST /api/v1/calls/session` — create a call session
+- `GET /api/v1/calls/session/:sessionId` — get call session details
+- `POST /api/v1/calls/session/:sessionId/end` — end a call session
+- `PATCH /api/v1/calls/session/:sessionId/accept` — accept a call session
+- `PATCH /api/v1/calls/session/:sessionId/reject` — reject a call session
+
+### Chat sessions
+
+- `POST /api/v1/chat-sessions/rooms` — create a chat room
+- `GET /api/v1/chat-sessions/rooms/:roomId` — get chat room details
+- `PATCH /api/v1/chat-sessions/rooms/:roomId/status` — update room status
+- `GET /api/v1/chat-sessions/rooms/:roomId/messages` — get messages for a room
+- `PATCH /api/v1/chat-sessions/messages/:messageId/delivered` — mark a message delivered
+- `PATCH /api/v1/chat-sessions/messages/:messageId/read` — mark a message read
+
+### Admin
+
+- `POST /api/v1/admin/login` — admin login
+- `GET /api/v1/admin/overview`
+- `GET /api/v1/admin/usage`
+- `GET /api/v1/admin/api-keys/activity`
+- `GET /api/v1/admin/organizations`
+- `GET /api/v1/admin/organizations/:id`
+- `PATCH /api/v1/admin/organizations/:id/activate`
+- `PATCH /api/v1/admin/organizations/:id/deactivate`
+- `GET /api/v1/admin/calls/stats`
+- `GET /api/v1/admin/calls/over-time`
+- `GET /api/v1/admin/calls/recent`
+- `GET /api/v1/admin/chats/stats`
+- `GET /api/v1/admin/chats/over-time`
+
+## Notes
+
+- Static files are served from `/public`, `/sdk`, and `/uploads`.
+- Swagger docs are protected by basic auth configured via `SW_USERNAME` and `SW_PASSWORD`.
+- The application expects PostgreSQL and uses Sequelize migrations.
+
+## What changed
+
+This README now reflects the actual project structure, entrypoints, environment variables, and routes implemented in this repository.
 
 ```
 Browser A  Browser B

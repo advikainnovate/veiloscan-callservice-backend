@@ -1,8 +1,21 @@
 const organizationRepository = require('../../repository/organization.repository');
 const { generateApiKey, hashApiKey } = require('../../utils/apikey');
 
+const buildOrganizationPayload = (data = {}) => {
+    const payload = {};
+
+    if (Object.prototype.hasOwnProperty.call(data, 'name')) {
+        payload.name = data.name;
+    }
+
+    return payload;
+};
+
 const createOrganization = async (data) => {
-    return organizationRepository.create(data);
+    return organizationRepository.create({
+        ...buildOrganizationPayload(data),
+        isActive: true,
+    });
 };
 
 const getOrganizationById = async (id) => {
@@ -10,7 +23,7 @@ const getOrganizationById = async (id) => {
 };
 
 const updateOrganization = async (id, data) => {
-    return organizationRepository.update(id, data);
+    return organizationRepository.update(id, buildOrganizationPayload(data));
 };
 
 const deleteOrganization = async (id) => {
